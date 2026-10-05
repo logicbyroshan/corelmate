@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 using Microsoft.Win32;
 using CorelMate.Badges;
 using CorelMate.Host;
@@ -43,12 +44,26 @@ public sealed partial class CorelMatePanel : UserControl
             var corelHost = CorelDrawHost.ConnectToRunningInstance();
             generator = new CorelDrawBadgeGenerator(corelHost);
             curvesConverter = new CorelTextToCurvesConverter(corelHost);
-            StatusText.Text = "CorelDRAW " + targetVersion + " connected. Select a master badge.";
+            StatusText.Text = "CorelDRAW " + targetVersion + " connected. Select a master badge template.";
+            StatusBadgeText.Text = "Connected";
+            StatusIndicatorDot.Fill = (Brush)FindResource("CorelMateSuccessBrush");
+            HostVersionText.Text = "CorelDRAW Graphics Suite " + targetVersion;
         }
         catch (Exception exception)
         {
             StatusText.Text = "CorelDRAW connection unavailable: " + exception.Message;
+            StatusBadgeText.Text = "Offline";
+            StatusIndicatorDot.Fill = (Brush)FindResource("CorelMateErrorBrush");
+            HostVersionText.Text = "Disconnected (" + exception.Message + ")";
         }
+    }
+
+    private void TabRadio_Checked(object sender, RoutedEventArgs e)
+    {
+        if (BadgesTabContent == null || CurvesTabContent == null || SettingsTabContent == null) return;
+        BadgesTabContent.Visibility = TabBadgesRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        CurvesTabContent.Visibility = TabCurvesRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        SettingsTabContent.Visibility = TabInfoRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void UseSelectedButton_Click(object sender, RoutedEventArgs e)
@@ -57,7 +72,8 @@ public sealed partial class CorelMatePanel : UserControl
         {
             if (generator == null) throw new InvalidOperationException("CorelDRAW is not connected.");
             master = generator.CaptureSelectedMaster();
-            VariablesText.Text = string.Join(" | ", master.Variables);
+            UpdateVariablesDisplay();
+            DimensionsText.Text = master.WidthMillimeters.ToString("0.##", CultureInfo.InvariantCulture) + " × " + master.HeightMillimeters.ToString("0.##", CultureInfo.InvariantCulture) + " mm";
             BadgeWidthText.Text = master.WidthMillimeters.ToString("0.###", CultureInfo.InvariantCulture);
             BadgeHeightText.Text = master.HeightMillimeters.ToString("0.###", CultureInfo.InvariantCulture);
             RowsPanel.Children.Clear();
@@ -65,13 +81,38 @@ public sealed partial class CorelMatePanel : UserControl
             AddRowHeader();
             AddRow();
             SetMasterControlsEnabled(true);
-            StatusText.Text = "Master artwork captured. Enter one data row per line.";
+            StatusText.Text = "Master artwork captured (" + master.Variables.Count + " variables). Enter data rows or import CSV/XLSX.";
             RefreshPreview();
         }
         catch (Exception exception)
         {
             ShowFriendlyError(exception);
             ClearMasterState();
+        }
+    }
+
+    private void UpdateVariablesDisplay()
+    {
+        VariablesWrapPanel.Children.Clear();
+        if (master == null || master.Variables.Count == 0)
+        {
+            var border = new Border { Style = GetResource<Style>("CorelMatePillStyle") };
+            border.Child = new TextBlock { Text = "None detected", FontSize = 11, Foreground = (Brush)FindResource("CorelMateTextMutedBrush") };
+            VariablesWrapPanel.Children.Add(border);
+            return;
+        }
+
+        foreach (var variable in master.Variables)
+        {
+            var border = new Border { Style = GetResource<Style>("CorelMatePillStyle") };
+            border.Child = new TextBlock
+            {
+                Text = "{{" + variable + "}}",
+                FontSize = 11,
+                FontWeight = FontWeights.SemiBold,
+                Foreground = (Brush)FindResource("CorelMateAccentBrush")
+            };
+            VariablesWrapPanel.Children.Add(border);
         }
     }
 
@@ -86,8 +127,9 @@ public sealed partial class CorelMatePanel : UserControl
             var rows = ParseRows();
             var settings = CreateLayoutSettings();
             var result = generator.Generate(master, settings, rows);
-            ResultText.Text = "Generated " + result.TotalBadges + " badges across " + result.PagesCreated + " page(s). The master was kept.";
-            StatusText.Text = "Generation complete.";
+            ResultText.Text = "✓ Successfully generated " + result.TotalBadges + " badges across " + result.PagesCreated + " page(s). Master artwork was preserved.";
+            ResultText.Foreground = (Brush)FindResource("CorelMateSuccessBrush");
+            StatusText.Text = "Generation complete (" + result.TotalBadges + " badges).";
         }
         catch (Exception exception)
         {
@@ -107,6 +149,7 @@ public sealed partial class CorelMatePanel : UserControl
         if (rowEditors.Count == 0) return;
         RowsPanel.Children.Remove(rowEditors[rowEditors.Count - 1].Container);
         rowEditors.RemoveAt(rowEditors.Count - 1);
+        UpdateRowCountDisplay();
         RefreshPreview();
     }
 
@@ -132,10 +175,10 @@ public sealed partial class CorelMatePanel : UserControl
                 var count = Math.Min(validation.Errors.Count, 10);
                 var shownErrors = new List<string>();
                 for (var index = 0; index < count; index++) shownErrors.Add(validation.Errors[index]);
-                var message = "Import validation failed.\r\n\r\n" + string.Join("\r\n", shownErrors);
-                if (validation.Errors.Count > count) message += "\r\n\r\n" + validation.Errors.Count + " validation errors found.";
-                CurvesResultText.Text = string.Empty;
+                var message = "Import validation failed:\r\n" + string.Join("\r\n", shownErrors);
+                if (validation.Errors.Count > count) message += "\r\n...and " + (validation.Errors.Count - count) + " more error(s).";
                 ResultText.Text = message;
+                ResultText.Foreground = (Brush)FindResource("CorelMateErrorBrush");
                 StatusText.Text = "Import rejected; CorelDRAW was not modified.";
                 ClearRowState();
                 return;
@@ -144,7 +187,8 @@ public sealed partial class CorelMatePanel : UserControl
             ReplaceRows(validation.Rows);
             var sourceLabel = string.IsNullOrWhiteSpace(imported.WorksheetName) ? imported.SourceName : imported.SourceName + " / " + imported.WorksheetName;
             StatusText.Text = "Imported " + validation.Rows.Count + " rows from " + sourceLabel + ".";
-            ResultText.Text = "Mapped: " + string.Join(", ", validation.UsedColumns) + (validation.UnusedColumns.Count == 0 ? string.Empty : "\r\nUnused: " + string.Join(", ", validation.UnusedColumns));
+            ResultText.Text = "✓ Mapped: " + string.Join(", ", validation.UsedColumns) + (validation.UnusedColumns.Count == 0 ? string.Empty : "\r\nUnused: " + string.Join(", ", validation.UnusedColumns));
+            ResultText.Foreground = (Brush)FindResource("CorelMateSuccessBrush");
             RefreshPreview();
         }
         catch (Exception exception)
@@ -159,9 +203,9 @@ public sealed partial class CorelMatePanel : UserControl
         try
         {
             ParseRows();
-            var plan = BadgeLayoutEngine.Plan(CreateLayoutSettings(), TotalQuantity());
-            PreviewText.Text = "Total badges: " + TotalQuantity() + "\r\nColumns: " + plan.Columns + "\r\nRows: " + plan.RowsPerPage + "\r\nPer page: " + plan.PerPage + "\r\nPages required: " + plan.Pages.Count;
-            ResultText.Text = string.Empty;
+            RefreshPreview();
+            ResultText.Text = "Preview refreshed successfully.";
+            ResultText.Foreground = (Brush)FindResource("CorelMateTextSecondaryBrush");
         }
         catch (Exception exception)
         {
@@ -174,13 +218,18 @@ public sealed partial class CorelMatePanel : UserControl
         master = null;
         rowEditors.Clear();
         RowsPanel.Children.Clear();
-        VariablesText.Text = "None detected";
+        DimensionsText.Text = "No artwork captured";
+        UpdateVariablesDisplay();
         BadgeWidthText.Text = string.Empty;
         BadgeHeightText.Text = string.Empty;
-        PreviewText.Text = "Capture a master to preview the layout.";
+        MetricTotalText.Text = "0";
+        MetricColumnsText.Text = "-";
+        MetricPerPageText.Text = "-";
+        MetricPagesText.Text = "-";
+        PreviewDetailText.Text = "Capture a master to preview the layout plan.";
         ResultText.Text = string.Empty;
-        CurvesResultText.Text = string.Empty;
-        StatusText.Text = "Select the complete badge artwork in CorelDRAW first.";
+        CurvesResultText.Text = "Select artwork in CorelDRAW and click Convert.";
+        StatusText.Text = "Select a master badge template in CorelDRAW to begin.";
         ClearMasterState();
     }
 
@@ -192,21 +241,21 @@ public sealed partial class CorelMatePanel : UserControl
             var preflight = curvesConverter.PreflightSelection();
             if (preflight.Summary.ConvertibleTextObjects == 0)
             {
-                CurvesResultText.Text = "No convertible text was found in the selected artwork.";
-                if (preflight.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " " + preflight.Summary.SkippedTextObjects + " text object(s) were skipped.";
+                CurvesResultText.Text = "No convertible text objects found in selected artwork.";
+                if (preflight.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + preflight.Summary.SkippedTextObjects + " text object(s) skipped).";
                 return;
             }
 
             var confirmation = MessageBox.Show(
-                "Convert " + preflight.Summary.ConvertibleTextObjects + " text object(s) to curves?\r\n\r\nThis makes those text objects no longer editable as text.",
-                "Convert Text to Curves",
+                "Convert " + preflight.Summary.ConvertibleTextObjects + " text object(s) to curves?\r\n\r\nNote: Text will no longer be editable as text.",
+                "CorelMate: Convert Text to Curves",
                 MessageBoxButton.OKCancel,
-                MessageBoxImage.Warning);
+                MessageBoxImage.Question);
             if (confirmation != MessageBoxResult.OK) return;
 
             var result = curvesConverter.Convert(preflight);
-            CurvesResultText.Text = result.ConvertedTextObjects + " text object(s) converted to curves.";
-            if (result.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " " + result.Summary.SkippedTextObjects + " skipped.";
+            CurvesResultText.Text = "✓ " + result.ConvertedTextObjects + " text object(s) successfully converted to curves.";
+            if (result.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + result.Summary.SkippedTextObjects + " skipped).";
         }
         catch (Exception exception)
         {
@@ -224,11 +273,11 @@ public sealed partial class CorelMatePanel : UserControl
             for (var index = 0; index < master.Variables.Count; index++)
             {
                 var value = editor.ValueBoxes[index].Text.Trim();
-                if (value.Length == 0) throw new FormatException("Enter a value for " + master.Variables[index] + " in every row.");
+                if (value.Length == 0) throw new FormatException("Enter a value for {{" + master.Variables[index] + "}} in every row.");
                 values[master.Variables[index]] = value;
             }
 
-            if (!int.TryParse(editor.QuantityBox.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var quantity) || quantity < 0) throw new FormatException("Quantity must be a nonnegative integer.");
+            if (!int.TryParse(editor.QuantityBox.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var quantity) || quantity < 0) throw new FormatException("Quantity must be a non-negative integer.");
             rows.Add(new BadgeDataRow(values, quantity));
         }
 
@@ -243,18 +292,20 @@ public sealed partial class CorelMatePanel : UserControl
         var valueBoxes = new List<TextBox>();
         foreach (var variable in master.Variables)
         {
-            var box = new TextBox { Width = 92, Margin = new Thickness(0, 0, 4, 0), ToolTip = variable };
+            var box = new TextBox { Width = 96, ToolTip = variable, Style = GetResource<Style>("CorelMateTextBoxStyle") };
             box.TextChanged += RowInputChanged;
             valueBoxes.Add(box);
             container.Children.Add(box);
         }
 
-        var quantityBox = new TextBox { Width = 48, Text = "1", ToolTip = "Quantity" };
+        var quantityBox = new TextBox { Width = 50, Text = "1", ToolTip = "Quantity", Style = GetResource<Style>("CorelMateTextBoxStyle") };
         quantityBox.TextChanged += RowInputChanged;
         container.Children.Add(quantityBox);
         rowEditors.Add(new RowEditor(container, valueBoxes, quantityBox));
         RowsPanel.Children.Add(container);
         DeleteRowButton.IsEnabled = true;
+        UpdateRowCountDisplay();
+        RefreshPreview();
     }
 
     private void ReplaceRows(IReadOnlyList<BadgeDataRow> rows)
@@ -269,28 +320,54 @@ public sealed partial class CorelMatePanel : UserControl
             var valueBoxes = new List<TextBox>();
             foreach (var variable in master.Variables)
             {
-                var box = new TextBox { Width = 92, Margin = new Thickness(0, 0, 4, 0), Text = row.GetValue(variable), ToolTip = variable };
+                var box = new TextBox { Width = 96, Text = row.GetValue(variable), ToolTip = variable, Style = GetResource<Style>("CorelMateTextBoxStyle") };
                 box.TextChanged += RowInputChanged;
                 valueBoxes.Add(box);
                 container.Children.Add(box);
             }
 
-            var quantityBox = new TextBox { Width = 48, Text = row.Quantity.ToString(CultureInfo.InvariantCulture), ToolTip = "Quantity" };
+            var quantityBox = new TextBox { Width = 50, Text = row.Quantity.ToString(CultureInfo.InvariantCulture), ToolTip = "Quantity", Style = GetResource<Style>("CorelMateTextBoxStyle") };
             quantityBox.TextChanged += RowInputChanged;
             container.Children.Add(quantityBox);
             rowEditors.Add(new RowEditor(container, valueBoxes, quantityBox));
             RowsPanel.Children.Add(container);
         }
         DeleteRowButton.IsEnabled = rowEditors.Count > 0;
+        UpdateRowCountDisplay();
+        RefreshPreview();
     }
 
     private void AddRowHeader()
     {
         if (master == null) return;
-        var header = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 4) };
-        foreach (var variable in master.Variables) header.Children.Add(new TextBlock { Text = variable, Width = 92, Margin = new Thickness(0, 0, 4, 0), FontWeight = FontWeights.Bold });
-        header.Children.Add(new TextBlock { Text = "QTY", Width = 48, FontWeight = FontWeights.Bold });
+        var header = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
+        foreach (var variable in master.Variables)
+        {
+            header.Children.Add(new TextBlock
+            {
+                Text = variable,
+                Width = 96,
+                Margin = new Thickness(4, 0, 0, 0),
+                FontWeight = FontWeights.Bold,
+                FontSize = 10.5,
+                Foreground = (Brush)FindResource("CorelMateTextSecondaryBrush")
+            });
+        }
+        header.Children.Add(new TextBlock
+        {
+            Text = "QTY",
+            Width = 50,
+            Margin = new Thickness(4, 0, 0, 0),
+            FontWeight = FontWeights.Bold,
+            FontSize = 10.5,
+            Foreground = (Brush)FindResource("CorelMateTextSecondaryBrush")
+        });
         RowsPanel.Children.Add(header);
+    }
+
+    private void UpdateRowCountDisplay()
+    {
+        RowCountText.Text = rowEditors.Count + (rowEditors.Count == 1 ? " row" : " rows");
     }
 
     private void RowInputChanged(object sender, TextChangedEventArgs e)
@@ -340,11 +417,20 @@ public sealed partial class CorelMatePanel : UserControl
             var settings = CreateLayoutSettings();
             var total = TotalQuantity();
             var plan = BadgeLayoutEngine.Plan(settings, total);
-            PreviewText.Text = "Total badges: " + total + "\r\nColumns: " + plan.Columns + "\r\nRows: " + plan.RowsPerPage + "\r\nPer page: " + plan.PerPage + "\r\nPages required: " + plan.Pages.Count;
+            MetricTotalText.Text = total.ToString(CultureInfo.InvariantCulture);
+            MetricColumnsText.Text = plan.Columns.ToString(CultureInfo.InvariantCulture);
+            MetricPerPageText.Text = plan.PerPage.ToString(CultureInfo.InvariantCulture);
+            MetricPagesText.Text = plan.Pages.Count.ToString(CultureInfo.InvariantCulture);
+            PreviewDetailText.Text = "Grid: " + plan.Columns + " col(s) × " + plan.RowsPerPage + " row(s) = " + plan.PerPage + " badges/page across " + plan.Pages.Count + " page(s).";
         }
         catch
         {
-            PreviewText.Text = "Preview unavailable until the layout and rows are valid.";
+            var total = TotalQuantity();
+            MetricTotalText.Text = total > 0 ? total.ToString(CultureInfo.InvariantCulture) : "0";
+            MetricColumnsText.Text = "-";
+            MetricPerPageText.Text = "-";
+            MetricPagesText.Text = "-";
+            PreviewDetailText.Text = "Preview unavailable until the layout and rows are valid.";
         }
     }
 
@@ -372,19 +458,37 @@ public sealed partial class CorelMatePanel : UserControl
     {
         master = null;
         ClearRowState();
+        DimensionsText.Text = "No artwork captured";
         BadgeWidthText.Text = string.Empty;
         BadgeHeightText.Text = string.Empty;
         SetMasterControlsEnabled(false);
-        VariablesText.Text = "None detected";
-        PreviewText.Text = "Capture a master to preview the layout.";
+        UpdateVariablesDisplay();
+        MetricTotalText.Text = "0";
+        MetricColumnsText.Text = "-";
+        MetricPerPageText.Text = "-";
+        MetricPagesText.Text = "-";
+        PreviewDetailText.Text = "Capture a master to preview the layout plan.";
     }
 
     private void ClearRowState()
     {
         rowEditors.Clear();
         RowsPanel.Children.Clear();
+        var emptyHint = new TextBlock
+        {
+            Text = "Capture master artwork to configure data rows or import CSV/XLSX.",
+            Style = GetResource<Style>("CorelMateCaptionStyle"),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            Margin = new Thickness(0, 16, 0, 16)
+        };
+        RowsPanel.Children.Add(emptyHint);
         DeleteRowButton.IsEnabled = false;
-        PreviewText.Text = master == null ? "Capture a master to preview the layout." : "Preview unavailable until the layout and rows are valid.";
+        UpdateRowCountDisplay();
+        MetricTotalText.Text = "0";
+        MetricColumnsText.Text = "-";
+        MetricPerPageText.Text = "-";
+        MetricPagesText.Text = "-";
+        PreviewDetailText.Text = master == null ? "Capture a master to preview the layout plan." : "Preview unavailable until the layout and rows are valid.";
     }
 
     private void ShowFriendlyError(Exception exception)
@@ -392,11 +496,17 @@ public sealed partial class CorelMatePanel : UserControl
         var message = exception is FormatException || exception is InvalidOperationException ? exception.Message : "CorelDRAW could not complete the operation. Verify that the document and selected artwork are still available.";
         StatusText.Text = message;
         ResultText.Text = message;
+        ResultText.Foreground = (Brush)FindResource("CorelMateErrorBrush");
     }
 
     private static double ParseNumber(string text, string label)
     {
         if (!double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out var value)) throw new FormatException("Enter a valid number for " + label + ".");
         return value;
+    }
+
+    private T GetResource<T>(string key) where T : class
+    {
+        return (T)FindResource(key);
     }
 }

@@ -108,12 +108,20 @@ Testing performed: Synthetic CSV/XLSX import tests and full solution regression 
 
 Follow-up: Perform foreground CorelDRAW file-picker/import and imported-data generation verification.
 
-## 2026-09-16: Task 8 Badge Generator QA
+## 2026-10-05: Task 9 Modern UI Design System
 
-Task: Audit and harden the existing Badge Generator without changing its architecture.
+Task: Modernize the CorelMate WPF Docker UI with an Adaptive Pro design system and segmented tabbed layout.
 
-What changed: Fixed stale row/layout/result state after failed master capture, invalid import, and reset.
+Reason: Transform the initial prototype UI into a visually polished, professional, and intuitive user experience matching modern CorelDRAW standards.
 
-Testing performed: Baseline build, smoke tests, release package, and real v27.1 manual adapter QA. Verified 11-badge generation, master preservation, invalid preflight rejection, Undo, and Redo.
+Files/areas affected: `src/CorelMate.UI/Themes/CorelMateTheme.xaml`, `src/CorelMate.UI/CorelMatePanel.xaml`, `src/CorelMate.UI/CorelMatePanel.cs`, `src/CorelMate.UI/CorelMate.UI.csproj`, and agent documentation.
 
-Unverified: foreground WPF/file-picker interaction, real XLSX generation, document switching, and 500/1000 badge performance.
+What changed:
+- Created an Adaptive Pro WPF theme resource dictionary with modern typography, dark slate surfaces, emerald gradients, card borders, and refined control templates.
+- Added segmented tab navigation for Badges (`🏷️ Badges`), Text to Curves (`🔤 Curves`), and System Info (`⚙️ Info`).
+- Added live host connection indicator pill with color-coded status dot.
+- Added dynamic rounded variable pill badges (`{{VARIABLE}}`) in the master capture card.
+- Implemented a 4-tile live layout metrics grid (`TOTAL`, `COLUMNS`, `PER PAGE`, `PAGES`).
+- Restyled data entry table, layout form inputs, and buttons with primary/secondary hierarchy and interactive hover states.
+
+Testing performed: Release solution build passed with 0 warnings/errors; smoke tests passed; release packaging succeeded.

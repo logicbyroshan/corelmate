@@ -60,3 +60,10 @@
 - Added the canonical CorelMate logo under `assets/brand/corelmate-logo.png`.
 - Rebuilt the root README as a branded open-source project guide.
 - Added MIT license, contribution guide, security policy, code of conduct, and support guide.
+
+## 0.1.0 - 2026-10-05 - Task 9 Modern UI Design System
+
+- Added Adaptive Pro theme resource dictionary with modern dark surfaces, emerald gradients, and styled control templates.
+- Implemented segmented tab navigation for Badge Generator, Text to Curves, and System Info.
+- Added live status indicator pill and dynamic variable pill chips.
+- Implemented 4-tile live layout metrics grid and modern data entry table layout.

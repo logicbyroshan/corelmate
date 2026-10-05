@@ -1,0 +1,270 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- Core Palette Tokens (Adaptive Pro) -->
+  <Color x:Key="CorelMateAccentColor">#10B981</Color>
+  <Color x:Key="CorelMateAccentHoverColor">#34D399</Color>
+  <Color x:Key="CorelMateAccentPressedColor">#059669</Color>
+
+  <SolidColorBrush x:Key="CorelMateAccentBrush" Color="{StaticResource CorelMateAccentColor}" />
+  <SolidColorBrush x:Key="CorelMateAccentHoverBrush" Color="{StaticResource CorelMateAccentHoverColor}" />
+  <SolidColorBrush x:Key="CorelMateAccentPressedBrush" Color="{StaticResource CorelMateAccentPressedColor}" />
+
+  <LinearGradientBrush x:Key="CorelMatePrimaryGradientBrush" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#10B981" Offset="0.0" />
+    <GradientStop Color="#059669" Offset="1.0" />
+  </LinearGradientBrush>
+
+  <LinearGradientBrush x:Key="CorelMatePrimaryGradientHoverBrush" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#34D399" Offset="0.0" />
+    <GradientStop Color="#10B981" Offset="1.0" />
+  </LinearGradientBrush>
+
+  <!-- Surface & Card Colors -->
+  <SolidColorBrush x:Key="CorelMateAppBackgroundBrush" Color="#18181B" />
+  <SolidColorBrush x:Key="CorelMateSurfaceBrush" Color="#222227" />
+  <SolidColorBrush x:Key="CorelMateSurfaceRaisedBrush" Color="#2A2A31" />
+  <SolidColorBrush x:Key="CorelMateSurfaceSubtleBrush" Color="#1F1F24" />
+  <SolidColorBrush x:Key="CorelMateCardBorderBrush" Color="#34343D" />
+  <SolidColorBrush x:Key="CorelMateBorderBrush" Color="#3E3E48" />
+  <SolidColorBrush x:Key="CorelMateFocusBorderBrush" Color="#10B981" />
+
+  <!-- Typography Colors -->
+  <SolidColorBrush x:Key="CorelMateTextPrimaryBrush" Color="#F4F4F5" />
+  <SolidColorBrush x:Key="CorelMateTextSecondaryBrush" Color="#A1A1AA" />
+  <SolidColorBrush x:Key="CorelMateTextMutedBrush" Color="#71717A" />
+  <SolidColorBrush x:Key="CorelMateTextOnAccentBrush" Color="#FFFFFF" />
+
+  <!-- Status & Feedback Colors -->
+  <SolidColorBrush x:Key="CorelMateSuccessBrush" Color="#10B981" />
+  <SolidColorBrush x:Key="CorelMateSuccessBgBrush" Color="#152B24" />
+  <SolidColorBrush x:Key="CorelMateSuccessBorderBrush" Color="#1D4E3A" />
+
+  <SolidColorBrush x:Key="CorelMateWarningBrush" Color="#F59E0B" />
+  <SolidColorBrush x:Key="CorelMateWarningBgBrush" Color="#2C2212" />
+  <SolidColorBrush x:Key="CorelMateWarningBorderBrush" Color="#5A4017" />
+
+  <SolidColorBrush x:Key="CorelMateErrorBrush" Color="#EF4444" />
+  <SolidColorBrush x:Key="CorelMateErrorBgBrush" Color="#2B1516" />
+  <SolidColorBrush x:Key="CorelMateErrorBorderBrush" Color="#571D20" />
+
+  <SolidColorBrush x:Key="CorelMateInfoBrush" Color="#3B82F6" />
+  <SolidColorBrush x:Key="CorelMateInfoBgBrush" Color="#142138" />
+  <SolidColorBrush x:Key="CorelMateInfoBorderBrush" Color="#1E3A6E" />
+
+  <SolidColorBrush x:Key="CorelMatePillBgBrush" Color="#2D313A" />
+  <SolidColorBrush x:Key="CorelMatePillBorderBrush" Color="#3F4552" />
+
+  <!-- Root Container Style -->
+  <Style x:Key="CorelMateRootStyle" TargetType="UserControl">
+    <Setter Property="Background" Value="{DynamicResource CorelMateAppBackgroundBrush}" />
+    <Setter Property="Foreground" Value="{DynamicResource CorelMateTextPrimaryBrush}" />
+    <Setter Property="FontFamily" Value="Segoe UI, -apple-system, BlinkMacSystemFont, Roboto, sans-serif" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="SnapsToDevicePixels" Value="True" />
+  </Style>
+
+  <!-- Typography Styles -->
+  <Style x:Key="CorelMateHeaderTitleStyle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="15" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource CorelMateTextPrimaryBrush}" />
+  </Style>
+
+  <Style x:Key="CorelMateSectionTitleStyle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="Foreground" Value="{DynamicResource CorelMateTextSecondaryBrush}" />
+    <Setter Property="Margin" Value="0,0,0,8" />
+  </Style>
+
+  <Style x:Key="CorelMateBodyStyle" TargetType="TextBlock">
+    <Setter Property="TextWrapping" Value="Wrap" />
+    <Setter Property="Foreground" Value="{DynamicResource CorelMateTextPrimaryBrush}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="LineHeight" Value="16" />
+  </Style>
+
+  <Style x:Key="CorelMateCaptionStyle" TargetType="TextBlock">
+    <Setter Property="FontSize" Value="11" />
+    <Setter Property="Foreground" Value="{DynamicResource CorelMateTextMutedBrush}" />
+    <Setter Property="TextWrapping" Value="Wrap" />
+  </Style>
+
+  <!-- Card Styles -->
+  <Style x:Key="CorelMateCardStyle" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource CorelMateSurfaceBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CorelMateCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="8" />
+    <Setter Property="Padding" Value="12" />
+    <Setter Property="Margin" Value="0,0,0,10" />
+  </Style>
+
+  <Style x:Key="CorelMateCardRaisedStyle" TargetType="Border" BasedOn="{StaticResource CorelMateCardStyle}">
+    <Setter Property="Background" Value="{DynamicResource CorelMateSurfaceRaisedBrush}" />
+  </Style>
+
+  <Style x:Key="CorelMateMetricCardStyle" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource CorelMateSurfaceSubtleBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CorelMateCardBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="6" />
+    <Setter Property="Padding" Value="8,6" />
+  </Style>
+
+  <!-- Navigation / Tab RadioButton Style -->
+  <Style x:Key="CorelMateTabButtonStyle" TargetType="RadioButton">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{DynamicResource CorelMateTextSecondaryBrush}" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="11.5" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="RadioButton">
+          <Border x:Name="TabBorder" Background="{TemplateBinding Background}" CornerRadius="6" Padding="12,6" Margin="2,0">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource CorelMateSurfaceRaisedBrush}" />
+              <Setter Property="Foreground" Value="{DynamicResource CorelMateTextPrimaryBrush}" />
+            </Trigger>
+            <Trigger Property="IsChecked" Value="True">
+              <Setter TargetName="TabBorder" Property="Background" Value="{DynamicResource CorelMateSurfaceRaisedBrush}" />
+              <Setter Property="Foreground" Value="{DynamicResource CorelMateAccentBrush}" />
+              <Setter TargetName="TabBorder" Property="BorderBrush" Value="{DynamicResource CorelMateAccentBrush}" />
+              <Setter TargetName="TabBorder" Property="BorderThickness" Value="1" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Button Styles -->
+  <Style x:Key="CorelMateButtonStyle" TargetType="Button">
+    <Setter Property="MinHeight" Value="32" />
+    <Setter Property="Padding" Value="12,6" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="FontSize" Value="11.5" />
+    <Setter Property="Foreground" Value="{DynamicResource CorelMateTextPrimaryBrush}" />
+    <Setter Property="Background" Value="{DynamicResource CorelMateSurfaceRaisedBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CorelMateBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource CorelMateBorderBrush}" />
+              <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{DynamicResource CorelMateTextSecondaryBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource CorelMateSurfaceSubtleBrush}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{DynamicResource CorelMateAccentBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.38" />
+              <Setter Property="Cursor" Value="Arrow" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="CorelMatePrimaryButtonStyle" TargetType="Button">
+    <Setter Property="MinHeight" Value="36" />
+    <Setter Property="Padding" Value="14,8" />
+    <Setter Property="FontWeight" Value="Bold" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource CorelMateTextOnAccentBrush}" />
+    <Setter Property="Background" Value="{DynamicResource CorelMatePrimaryGradientBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CorelMateAccentBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="Button">
+          <Border x:Name="ButtonBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource CorelMatePrimaryGradientHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="ButtonBorder" Property="Background" Value="{DynamicResource CorelMateAccentPressedBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.4" />
+              <Setter Property="Cursor" Value="Arrow" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="CorelMateSecondaryButtonStyle" TargetType="Button" BasedOn="{StaticResource CorelMateButtonStyle}">
+    <Setter Property="Background" Value="{DynamicResource CorelMateSurfaceSubtleBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CorelMateCardBorderBrush}" />
+    <Setter Property="MinHeight" Value="28" />
+    <Setter Property="Padding" Value="9,4" />
+    <Setter Property="FontSize" Value="11" />
+  </Style>
+
+  <!-- TextBox Style -->
+  <Style x:Key="CorelMateTextBoxStyle" TargetType="TextBox">
+    <Setter Property="MinHeight" Value="30" />
+    <Setter Property="Padding" Value="8,5" />
+    <Setter Property="Margin" Value="0,2,4,2" />
+    <Setter Property="Foreground" Value="{DynamicResource CorelMateTextPrimaryBrush}" />
+    <Setter Property="Background" Value="{DynamicResource CorelMateSurfaceSubtleBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CorelMateBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CaretBrush" Value="{DynamicResource CorelMateAccentBrush}" />
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="TextBox">
+          <Border x:Name="TextBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5" Padding="{TemplateBinding Padding}">
+            <ScrollViewer x:Name="PART_ContentHost" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="TextBorder" Property="BorderBrush" Value="{DynamicResource CorelMateTextSecondaryBrush}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocused" Value="True">
+              <Setter TargetName="TextBorder" Property="BorderBrush" Value="{DynamicResource CorelMateAccentBrush}" />
+              <Setter TargetName="TextBorder" Property="Background" Value="{DynamicResource CorelMateSurfaceRaisedBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Pill / Tag Style -->
+  <Style x:Key="CorelMatePillStyle" TargetType="Border">
+    <Setter Property="Background" Value="{DynamicResource CorelMatePillBgBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CorelMatePillBorderBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="8,3" />
+    <Setter Property="Margin" Value="0,0,6,6" />
+  </Style>
+
+</ResourceDictionary>

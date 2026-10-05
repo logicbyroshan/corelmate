@@ -2,5 +2,8 @@
   <PropertyGroup><TargetFramework>net48</TargetFramework><UseWPF>true</UseWPF><RootNamespace>CorelMate.UI</RootNamespace></PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\CorelMate.Host\CorelMate.Host.csproj" />
+    <Resource Include="..\..\assets\brand\corelmate-logo.png">
+      <Link>Assets\corelmate-logo.png</Link>
+    </Resource>
   </ItemGroup>
 </Project>
