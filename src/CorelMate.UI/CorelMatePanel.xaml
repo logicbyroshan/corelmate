@@ -1,49 +1,317 @@
 <UserControl x:Class="CorelMate.UI.CorelMatePanel"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             MinWidth="280"
-             MinHeight="520">
-  <ScrollViewer VerticalScrollBarVisibility="Auto">
-    <StackPanel Margin="16">
-      <TextBlock Text="CORELMATE" FontWeight="Bold" FontSize="16" />
-      <TextBlock Margin="0,12,0,0" Text="BADGE GENERATOR" FontWeight="Bold" />
-      <Button x:Name="UseSelectedButton" Margin="0,12,0,0" Padding="8,4" Content="Use Selected Artwork" Click="UseSelectedButton_Click" />
-      <TextBlock x:Name="StatusText" Margin="0,8,0,0" Text="Select a master badge in CorelDRAW." TextWrapping="Wrap" />
-      <TextBlock Margin="0,16,0,4" Text="Variables" FontWeight="Bold" />
-      <TextBlock x:Name="VariablesText" Text="None detected" TextWrapping="Wrap" />
-      <TextBlock Margin="0,16,0,4" Text="Data rows" FontWeight="Bold" />
-      <ScrollViewer MaxHeight="220" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-        <StackPanel x:Name="RowsPanel" />
-      </ScrollViewer>
-      <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-        <Button x:Name="AddRowButton" Padding="8,4" Content="Add Row" Click="AddRowButton_Click" IsEnabled="False" />
-        <Button x:Name="DeleteRowButton" Margin="6,0,0,0" Padding="8,4" Content="Delete Last Row" Click="DeleteRowButton_Click" IsEnabled="False" />
-        <Button x:Name="ImportDataButton" Margin="6,0,0,0" Padding="8,4" Content="Import CSV / XLSX" Click="ImportDataButton_Click" IsEnabled="False" />
+             Style="{StaticResource CorelMateRootStyle}"
+             MinWidth="300"
+             MinHeight="560">
+  <UserControl.Resources>
+    <ResourceDictionary Source="/CorelMate.UI;component/Themes/CorelMateTheme.xaml" />
+  </UserControl.Resources>
+
+  <Grid Margin="12,10,12,12">
+    <Grid.RowDefinitions>
+      <!-- Header -->
+      <RowDefinition Height="Auto" />
+      <!-- Navigation Tabs -->
+      <RowDefinition Height="Auto" />
+      <!-- Tab Content Area -->
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- App Header & Host Status -->
+    <Grid Grid.Row="0" Margin="0,0,0,10">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+
+      <Image Grid.Column="0" Width="30" Height="30" Stretch="Uniform" Source="/CorelMate.UI;component/Assets/corelmate-logo.png" Margin="0,0,8,0" VerticalAlignment="Center" />
+
+      <StackPanel Grid.Column="1" VerticalAlignment="Center">
+        <TextBlock Text="CORELMATE" Style="{StaticResource CorelMateHeaderTitleStyle}" />
+        <TextBlock Text="Productivity Suite" Style="{StaticResource CorelMateCaptionStyle}" />
       </StackPanel>
-      <TextBlock Margin="0,16,0,4" Text="Layout (millimeters)" FontWeight="Bold" />
+
+      <!-- Live Connection Pill -->
+      <Border Grid.Column="2" Background="{DynamicResource CorelMateSurfaceRaisedBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="8,4" VerticalAlignment="Center">
+        <StackPanel Orientation="Horizontal">
+          <Ellipse x:Name="StatusIndicatorDot" Width="7" Height="7" Fill="{DynamicResource CorelMateSuccessBrush}" Margin="0,0,5,0" VerticalAlignment="Center" />
+          <TextBlock x:Name="StatusBadgeText" Text="Connected" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource CorelMateTextSecondaryBrush}" VerticalAlignment="Center" />
+        </StackPanel>
+      </Border>
+    </Grid>
+
+    <!-- Segmented Navigation Bar -->
+    <Border Grid.Row="1" Background="{DynamicResource CorelMateSurfaceBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="3" Margin="0,0,0,10">
+      <UniformGrid Rows="1">
+        <RadioButton x:Name="TabBadgesRadio" Content="🏷️ Badges" Style="{StaticResource CorelMateTabButtonStyle}" IsChecked="True" Checked="TabRadio_Checked" />
+        <RadioButton x:Name="TabCurvesRadio" Content="🔤 Curves" Style="{StaticResource CorelMateTabButtonStyle}" Checked="TabRadio_Checked" />
+        <RadioButton x:Name="TabInfoRadio" Content="⚙️ Info" Style="{StaticResource CorelMateTabButtonStyle}" Checked="TabRadio_Checked" />
+      </UniformGrid>
+    </Border>
+
+    <!-- Main Scrollable Content Area -->
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <Grid>
-        <Grid.ColumnDefinitions><ColumnDefinition /><ColumnDefinition /></Grid.ColumnDefinitions>
-        <Grid.RowDefinitions><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /></Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Badge width" Margin="0,3" /><TextBox x:Name="BadgeWidthText" Grid.Row="0" Grid.Column="1" Margin="4,2" TextChanged="LayoutTextChanged" />
-        <TextBlock Grid.Row="1" Text="Badge height" Margin="0,3" /><TextBox x:Name="BadgeHeightText" Grid.Row="1" Grid.Column="1" Margin="4,2" TextChanged="LayoutTextChanged" />
-        <TextBlock Grid.Row="2" Text="Horizontal gap" Margin="0,3" /><TextBox x:Name="HorizontalGapText" Grid.Row="2" Grid.Column="1" Margin="4,2" Text="3" TextChanged="LayoutTextChanged" />
-        <TextBlock Grid.Row="3" Text="Vertical gap" Margin="0,3" /><TextBox x:Name="VerticalGapText" Grid.Row="3" Grid.Column="1" Margin="4,2" Text="3" TextChanged="LayoutTextChanged" />
-        <TextBlock Grid.Row="4" Text="Left / right margin" Margin="0,3" /><TextBox x:Name="HorizontalMarginText" Grid.Row="4" Grid.Column="1" Margin="4,2" Text="5" TextChanged="LayoutTextChanged" />
-        <TextBlock Grid.Row="5" Text="Top / bottom margin" Margin="0,3" /><TextBox x:Name="VerticalMarginText" Grid.Row="5" Grid.Column="1" Margin="4,2" Text="5" TextChanged="LayoutTextChanged" />
+        <!-- ==================== TAB 1: BADGE GENERATOR ==================== -->
+        <StackPanel x:Name="BadgesTabContent" Visibility="Visible">
+
+          <!-- Global Status Message Bar -->
+          <Border x:Name="StatusBanner" Background="{DynamicResource CorelMateSurfaceRaisedBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
+            <TextBlock x:Name="StatusText" Text="Select a master badge template in CorelDRAW to begin." Style="{StaticResource CorelMateBodyStyle}" Foreground="{DynamicResource CorelMateTextSecondaryBrush}" />
+          </Border>
+
+          <!-- 1. Master Artwork Card -->
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="MASTER ARTWORK" Style="{StaticResource CorelMateSectionTitleStyle}" VerticalAlignment="Center" />
+                <TextBlock x:Name="DimensionsText" Grid.Column="1" Text="No artwork captured" Style="{StaticResource CorelMateCaptionStyle}" VerticalAlignment="Center" />
+              </Grid>
+
+              <Button x:Name="UseSelectedButton" Content="⚡ Use Selected Artwork" Click="UseSelectedButton_Click" Style="{StaticResource CorelMatePrimaryButtonStyle}" Margin="0,0,0,8" />
+
+              <TextBlock Text="DETECTED VARIABLES" Style="{StaticResource CorelMateCaptionStyle}" FontWeight="SemiBold" Margin="0,4,0,4" />
+              <WrapPanel x:Name="VariablesWrapPanel">
+                <Border Style="{StaticResource CorelMatePillStyle}">
+                  <TextBlock x:Name="VariablesText" Text="None detected" FontSize="11" Foreground="{DynamicResource CorelMateTextMutedBrush}" />
+                </Border>
+              </WrapPanel>
+            </StackPanel>
+          </Border>
+
+          <!-- 2. Data Rows Card -->
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="DATA ENTRIES" Style="{StaticResource CorelMateSectionTitleStyle}" VerticalAlignment="Center" />
+                <TextBlock x:Name="RowCountText" Grid.Column="1" Text="0 rows" Style="{StaticResource CorelMateCaptionStyle}" VerticalAlignment="Center" />
+              </Grid>
+
+              <!-- Action Toolbar -->
+              <WrapPanel Margin="0,0,0,8">
+                <Button x:Name="AddRowButton" Content="+ Add Row" Click="AddRowButton_Click" Style="{StaticResource CorelMateSecondaryButtonStyle}" IsEnabled="False" Margin="0,0,6,4" />
+                <Button x:Name="DeleteRowButton" Content="✕ Delete Last" Click="DeleteRowButton_Click" Style="{StaticResource CorelMateSecondaryButtonStyle}" IsEnabled="False" Margin="0,0,6,4" />
+                <Button x:Name="ImportDataButton" Content="📥 Import CSV / XLSX" Click="ImportDataButton_Click" Style="{StaticResource CorelMateSecondaryButtonStyle}" IsEnabled="False" Margin="0,0,0,4" />
+              </WrapPanel>
+
+              <!-- Data Rows Table Area -->
+              <Border Background="{DynamicResource CorelMateSurfaceSubtleBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6" MinHeight="70" MaxHeight="220">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                  <StackPanel x:Name="RowsPanel">
+                    <TextBlock x:Name="EmptyRowsHint" Text="Capture master artwork to configure data rows or import CSV/XLSX." Style="{StaticResource CorelMateCaptionStyle}" HorizontalAlignment="Center" Margin="0,16" />
+                  </StackPanel>
+                </ScrollViewer>
+              </Border>
+            </StackPanel>
+          </Border>
+
+          <!-- 3. Layout & Margins Card -->
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <TextBlock Text="LAYOUT &amp; SPACING (MM)" Style="{StaticResource CorelMateSectionTitleStyle}" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="6" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Row 0: Width & Height -->
+                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,6">
+                  <TextBlock Text="Badge Width (mm)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,2" />
+                  <TextBox x:Name="BadgeWidthText" Style="{StaticResource CorelMateTextBoxStyle}" TextChanged="LayoutTextChanged" />
+                </StackPanel>
+                <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,6">
+                  <TextBlock Text="Badge Height (mm)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,2" />
+                  <TextBox x:Name="BadgeHeightText" Style="{StaticResource CorelMateTextBoxStyle}" TextChanged="LayoutTextChanged" />
+                </StackPanel>
+
+                <!-- Row 1: Gaps -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,6">
+                  <TextBlock Text="Horizontal Gap (mm)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,2" />
+                  <TextBox x:Name="HorizontalGapText" Style="{StaticResource CorelMateTextBoxStyle}" Text="3" TextChanged="LayoutTextChanged" />
+                </StackPanel>
+                <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,6">
+                  <TextBlock Text="Vertical Gap (mm)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,2" />
+                  <TextBox x:Name="VerticalGapText" Style="{StaticResource CorelMateTextBoxStyle}" Text="3" TextChanged="LayoutTextChanged" />
+                </StackPanel>
+
+                <!-- Row 2: Margins -->
+                <StackPanel Grid.Row="2" Grid.Column="0">
+                  <TextBlock Text="Left / Right Margin (mm)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,2" />
+                  <TextBox x:Name="HorizontalMarginText" Style="{StaticResource CorelMateTextBoxStyle}" Text="5" TextChanged="LayoutTextChanged" />
+                </StackPanel>
+                <StackPanel Grid.Row="2" Grid.Column="2">
+                  <TextBlock Text="Top / Bottom Margin (mm)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,2" />
+                  <TextBox x:Name="VerticalMarginText" Style="{StaticResource CorelMateTextBoxStyle}" Text="5" TextChanged="LayoutTextChanged" />
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <!-- 4. Preview & Generation Card -->
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <TextBlock Text="PLAN &amp; GENERATION" Style="{StaticResource CorelMateSectionTitleStyle}" />
+
+              <!-- Live Metric Tiles Grid -->
+              <Grid Margin="0,0,0,10">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="4" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="4" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="4" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="TOTAL" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="MetricTotalText" Text="0" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource CorelMateAccentBrush}" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="COLUMNS" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="MetricColumnsText" Text="-" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="PER PAGE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="MetricPerPageText" Text="-" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+
+                <Border Grid.Column="6" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="PAGES" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="MetricPagesText" Text="-" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <TextBlock x:Name="PreviewDetailText" Text="Capture a master to preview the layout plan." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,10" />
+
+              <!-- Generation Actions -->
+              <Grid Margin="0,0,0,6">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="6" />
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="6" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Button x:Name="GenerateButton" Grid.Column="0" Content="🚀 Generate Badges" Click="GenerateButton_Click" Style="{StaticResource CorelMatePrimaryButtonStyle}" IsEnabled="False" />
+                <Button x:Name="PreviewButton" Grid.Column="2" Content="🔄 Preview" Click="PreviewButton_Click" Style="{StaticResource CorelMateButtonStyle}" IsEnabled="False" />
+                <Button x:Name="ResetButton" Grid.Column="4" Content="Reset" Click="ResetButton_Click" Style="{StaticResource CorelMateSecondaryButtonStyle}" />
+              </Grid>
+
+              <!-- Result Notice -->
+              <TextBlock x:Name="ResultText" Style="{StaticResource CorelMateBodyStyle}" Margin="0,4,0,0" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ==================== TAB 2: TEXT TO CURVES ==================== -->
+        <StackPanel x:Name="CurvesTabContent" Visibility="Collapsed">
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <TextBlock Text="CONVERT TEXT TO CURVES" Style="{StaticResource CorelMateSectionTitleStyle}" />
+              <TextBlock Text="Preflight and convert selected artistic and paragraph text objects into native curves. Non-text vector artwork and images remain untouched." Style="{StaticResource CorelMateBodyStyle}" Margin="0,0,0,12" />
+
+              <!-- Preflight Info Cards -->
+              <Grid Margin="0,0,0,12">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="6" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CorelMateMetricCardStyle}" Padding="10,8">
+                  <StackPanel>
+                    <TextBlock Text="SAFETY GUARANTEE" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource CorelMateAccentBrush}" Margin="0,0,0,2" />
+                    <TextBlock Text="Locked &amp; hidden objects are safely preserved." Style="{StaticResource CorelMateCaptionStyle}" />
+                  </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CorelMateMetricCardStyle}" Padding="10,8">
+                  <StackPanel>
+                    <TextBlock Text="UNDO SUPPORT" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource CorelMateInfoBrush}" Margin="0,0,0,2" />
+                    <TextBlock Text="Reversible in a single CorelDRAW undo step." Style="{StaticResource CorelMateCaptionStyle}" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <Button x:Name="ConvertCurvesButton" Content="🔤 Convert Selection to Curves" Click="ConvertCurvesButton_Click" Style="{StaticResource CorelMatePrimaryButtonStyle}" Margin="0,0,0,8" />
+
+              <Border x:Name="CurvesResultCard" Background="{DynamicResource CorelMateSurfaceSubtleBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
+                <TextBlock x:Name="CurvesResultText" Text="Select artwork in CorelDRAW and click Convert." Style="{StaticResource CorelMateBodyStyle}" />
+              </Border>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ==================== TAB 3: SETTINGS & INFO ==================== -->
+        <StackPanel x:Name="SettingsTabContent" Visibility="Collapsed">
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <TextBlock Text="ABOUT CORELMATE" Style="{StaticResource CorelMateSectionTitleStyle}" />
+              <TextBlock Text="CorelMate is a productivity companion for CorelDRAW Graphics Suite." Style="{StaticResource CorelMateBodyStyle}" Margin="0,0,0,8" />
+
+              <Grid Margin="0,4,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Host:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
+                <TextBlock x:Name="HostVersionText" Grid.Row="0" Grid.Column="1" Text="CorelDRAW Graphics Suite 2026 (v27.x)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Text="UI Surface:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="WPF Native Docker (.NET Framework 4.8)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="0.1.0-alpha (Adaptive Pro)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
+              </Grid>
+            </StackPanel>
+          </Border>
+
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <TextBlock Text="QUICK TIPS" Style="{StaticResource CorelMateSectionTitleStyle}" />
+              <TextBlock Text="• In CorelDRAW, add dynamic text using {{NAME}}, {{TITLE}}, etc." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,4" />
+              <TextBlock Text="• CSV/XLSX spreadsheets match headers case-insensitively." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,4" />
+              <TextBlock Text="• Include a QUANTITY or QTY column in your spreadsheet." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,4" />
+              <TextBlock Text="• Batch generation automatically creates extra pages if needed." Style="{StaticResource CorelMateCaptionStyle}" />
+            </StackPanel>
+          </Border>
+        </StackPanel>
       </Grid>
-      <TextBlock Margin="0,16,0,4" Text="Preview" FontWeight="Bold" />
-      <TextBlock x:Name="PreviewText" Text="Capture a master to preview the layout." TextWrapping="Wrap" />
-      <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
-        <Button x:Name="PreviewButton" Padding="8,4" Content="Preview" Click="PreviewButton_Click" IsEnabled="False" />
-        <Button x:Name="GenerateButton" Margin="6,0,0,0" Padding="8,4" Content="Generate Badges" Click="GenerateButton_Click" IsEnabled="False" />
-        <Button x:Name="ResetButton" Margin="6,0,0,0" Padding="8,4" Content="Reset" Click="ResetButton_Click" />
-      </StackPanel>
-      <TextBlock x:Name="ResultText" Margin="0,8,0,0" TextWrapping="Wrap" />
-      <Separator Margin="0,20,0,12" />
-      <TextBlock Text="TEXT TO CURVES" FontWeight="Bold" />
-      <TextBlock Margin="0,6,0,0" Text="Convert selected text objects into curves." TextWrapping="Wrap" />
-      <Button x:Name="ConvertCurvesButton" Margin="0,8,0,0" Padding="8,4" Content="Convert Text to Curves" Click="ConvertCurvesButton_Click" />
-      <TextBlock x:Name="CurvesResultText" Margin="0,8,0,0" TextWrapping="Wrap" />
-    </StackPanel>
-  </ScrollViewer>
+    </ScrollViewer>
+  </Grid>
 </UserControl>

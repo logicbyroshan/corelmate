@@ -17,3 +17,4 @@ Updated 2026-09-16 during bootstrap.
 - Task 6 adds native Convert Text to Curves through shared Host traversal; real artistic, paragraph, locked/hidden, and undo/redo checks passed.
 - Task 7 adds dependency-free CSV/XLSX import mapped into existing BadgeDataRow values; synthetic parser and validation tests pass.
 - Task 8 audited production state handling and fixed stale UI rows/results after failed capture/import/reset; real v27.1 manual adapter QA passed for 11 badges, invalid preflight, and undo/redo.
+- Task 9 modernized the WPF UI with an Adaptive Pro design system, segmented tab navigation (Badges, Curves, Info), variable chip tags, live metric tiles, polished card surfaces, and styled input controls.
