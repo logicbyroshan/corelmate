@@ -40,6 +40,9 @@ public sealed partial class CorelMatePanel : UserControl
     private int detectedMajorVersion = 27;
     private CorelEra currentEra = CorelEra.AdaptivePro2026;
 
+    public string Title => "CorelMate";
+    public string Caption => "CorelMate";
+
     public CorelMatePanel() : this("2026 / v27")
     {
     }

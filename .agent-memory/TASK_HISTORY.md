@@ -1,5 +1,38 @@
 # Task History
 
+## 2026-11-17: Fix Docker Title Caption, Main Navbar Integration & Closed Docker Accessibility
+
+Task: Fix 3 reported issues in live CorelDRAW 2026 UI:
+1. Docker title and tab strip displaying full C# class name `CorelMate.UI.CorelMatePanel` instead of `CorelMate`.
+2. CorelMate missing from top navigation bar (navbar: `File | Edit | ... | Window | Help | CorelMate`).
+3. Re-accessing Docker when closed: provide seamless UI entry points (navbar, Window menu, dockers tab tray, and helper script).
+
+Reason: Address user testing feedback and screenshots showing Docker header and missing navbar menu.
+
+Files/areas affected: `src/CorelMate.Core/CorelWorkspacePatcher.cs`, `src/CorelMate.UI/CorelMatePanel.cs`, `src/CorelMate.Host/CorelMenuIntegration.cs`, `src/CorelMate.Host/CorelMate.Host.csproj`, `scripts/Install-Dev.ps1`, `scripts/Show-CorelMate.ps1`, `packaging/Install-CorelMate.ps1`, `tests/CorelMate.Tests/Program.cs`, `.agent-memory/`, `CHANGELOG.md`.
+
+What changed:
+1. Identified root cause in CorelDRAW active workspace `_default.cdws` (`content/workspace.xml`) where `AddDocker` generated `userCaption="CorelMate.UI.CorelMatePanel"`.
+2. Created `CorelWorkspacePatcher` in `CorelMate.Core` to safely patch active workspaces in-place:
+   - Sets `userCaption="CorelMate"` and `caption="CorelMate"` on `<dockerData guid="{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}" ...>`.
+   - Injects `CorelMate` top-level flyout menu item into menubar `modeData` (`6d1d9e94...` Welcome & `76d73481...` Doc Open).
+   - Injects `CorelMate Docker` toggle checkButton into Window menu and CorelMate menu using native `*Docker('{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}')`.
+   - Configures right-side dockHost viewHost `bf2668a0-d25d-4eb8-97c6-c0f9fe6e7516` with the CorelMate tab.
+   - Populates full submenu items (Curves, Inspector, Badges, About).
+3. Exposed `Title => "CorelMate"` and `Caption => "CorelMate"` in `CorelMatePanel.cs`.
+4. Added `scripts/Show-CorelMate.ps1` for rapid one-command Docker launch.
+5. Added unit tests for workspace XML and in-place zip archive patching in `CorelMate.Tests`.
+6. Updated `Install-Dev.ps1` and `packaging/Install-CorelMate.ps1` with safe timeout background COM execution.
+7. Verified live installation in CorelDRAW 2026 (v27.2.0.135).
+
+Testing performed:
+- All unit and smoke tests passed in `CorelMate.Tests` (including XML and zip archive tests).
+- Release build passed with 0 warnings and 0 errors.
+- Package build via `Build-Release.ps1` succeeded and validated.
+- Real-host installation via `Install-Dev.ps1` succeeded on CorelDRAW 2026 v27.2.0.135.
+
+Follow-up: Merge through GitHub PR workflow to `main`.
+
 ## 2026-11-17: Master Engineering Audit, UI Redesign, Version Adaptation & Menu Integration
 
 Task: Complete engineering audit, redesign the UI, integrate into the CorelDRAW application navigation menu, implement version-aware UI adaptation (2017–2026), and verify all features.

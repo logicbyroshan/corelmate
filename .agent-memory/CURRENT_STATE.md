@@ -31,3 +31,7 @@ Updated 2026-09-16 during bootstrap.
   - Enhanced WPF Docker Curves tab with scope selector, preflight breakdown metrics, backup preservation toggle, and execution timing.
   - Added native CorelDRAW menu commands and companion macro subs for page/all-pages/selection curve conversion.
   - Full test suite passing across layout, parsing, import, metrics, version evaluation, and curve conversion models. Release package built and validated.
+  - Docker Title & Tab Caption Fix: Resolved issue where Docker title displayed class name `CorelMate.UI.CorelMatePanel`; now explicitly sets `userCaption="CorelMate"` and `caption="CorelMate"` in active workspace `_default.cdws`.
+  - Main Navigation Bar (Navbar) Integration Fix: Patched `_default.cdws` `workspace.xml` with top-level `CorelMate` menu adjacent to `Help` across both Document Open and Welcome Screen modes.
+  - Docker Re-Access & Visibility: Added native `*Docker(...)` toggle binding in main menu `CorelMate -> CorelMate Docker` and `Window -> CorelMate Docker`, restored vertical `CorelMate` tab in right-side dockers tray, and added quick launch script `scripts/Show-CorelMate.ps1`.
+  - CorelWorkspacePatcher implemented in `CorelMate.Core` with smoke tests in `CorelMate.Tests`. Installed and verified on live CorelDRAW 2026.
