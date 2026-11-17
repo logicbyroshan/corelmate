@@ -1,5 +1,31 @@
 # Task History
 
+## 2026-11-17: Fix Docker UI Rendering & PowerClip/Group Curve Conversion Workflow
+
+Task: Fix 2 reported issues:
+1. Docker inside showing no UI (blank gray screen inside Docker panel).
+2. Clicking Convert Page to Curves did not convert text on page / inside PowerClips / groups.
+
+Reason: Address user testing feedback with real prepress artwork (`academic heights public school.cdr`).
+
+Files/areas affected: `src/CorelMate.UI/CorelMatePanel.xaml`, `src/CorelMate.UI/CorelMatePanel.cs`, `src/CorelMate.Host/CorelShapeTraversal.cs`, `src/CorelMate.Host/CorelTextToCurvesConverter.cs`, `src/CorelMate.Core/CorelWorkspacePatcher.cs`, `packaging/Install-CorelMate.ps1`, `scripts/Install-Dev.ps1`, `tests/CorelMate.Tests/Program.cs`, `.agent-memory/`, `CHANGELOG.md`.
+
+What changed:
+1. Identified root cause for blank Docker: `CorelMatePanel.xaml` had `Style="{StaticResource CorelMateRootStyle}"` on root `<UserControl>`, which threw `XamlParseException: Cannot find resource named 'CorelMateRootStyle'` because the resource dictionary is defined within the UserControl itself. Replaced with direct property setters on UserControl. Instantiation now verified 100% clean.
+2. Identified root cause for menu click doing nothing: In `_default.cdws`, `ItemConvertPageCurvesGuid` was declared as an unattached `type="button"` with no command binding. Changed to `check="*Docker('{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}')"` and bound native macro `ConvertAllToCurves.Converter.ConvertAllToCurves` to `ItemConvertAllCurvesGuid`.
+3. Added 1-click `Convert Page ⚡` button directly on the CorelMate Dashboard tab for instant active page conversion without having to navigate tabs.
+4. Hardened `CorelShapeTraversal.FlattenPage` to traverse both Layers and `page.Shapes` with a visited static ID set to ensure no text shapes are missed.
+5. Hardened `CorelTextToCurvesConverter.Convert` to convert text inside PowerClip containers with automatic fallback to `PowerClip.EnterEditMode()` / `LeaveEditMode()`.
+6. Verified conversion against real user artwork (`academic heights public school.cdr`): Converted all 2 text objects on Page 1 in 123ms with 0 errors and 0 remaining text shapes.
+
+Testing performed:
+- Standalone WPF instantiation test passed (Grid content, background #FF18181B, all tabs and buttons found).
+- All unit and smoke tests passed in `CorelMate.Tests`.
+- Real document conversion test on `academic heights public school.cdr` passed cleanly.
+- Release build passed with 0 warnings, 0 errors.
+
+Follow-up: Merge via PR to `main`.
+
 ## 2026-11-17: Fix Docker Title Caption, Main Navbar Integration & Closed Docker Accessibility
 
 Task: Fix 3 reported issues in live CorelDRAW 2026 UI:

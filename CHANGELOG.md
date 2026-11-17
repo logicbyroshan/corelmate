@@ -16,6 +16,14 @@ Project branding and open-source documentation details are recorded in [.agents/
  
 Task 9 Modern UI Design System details are recorded in [.agents/CHANGELOG.md](.agents/CHANGELOG.md).
 
+## CorelMate 1.18.1 (Update 2) - Docker UI Display & PowerClip Curve Conversion Fix
+
+- **Docker UI Rendering Fix**: Resolved root cause in `CorelMatePanel.xaml` where `Style="{StaticResource CorelMateRootStyle}"` on `<UserControl>` threw a `XamlParseException: Cannot find resource named 'CorelMateRootStyle'`, leaving the Docker interior completely blank. Direct root styling now ensures 100% visible, themed WPF controls upon Docker creation.
+- **PowerClip & Nested Group Curve Conversion**: Hardened `CorelShapeTraversal` and `CorelTextToCurvesConverter` to safely traverse and convert text objects inside nested groups and PowerClips without ungrouping, with automatic fallback to container edit mode (`PowerClip.EnterEditMode()` / `LeaveEditMode()`).
+- **Dashboard Quick Action**: Added instant `Convert Page ⚡` 1-click action directly to the CorelMate Dashboard tab for immediate single-click curve conversion without manual tab navigation.
+- **Navbar Menu Action Routing**: Updated menu command bindings in `CorelWorkspacePatcher` so clicking `Convert Page to Curves (Docker)` or other CorelMate tools in the top navigation bar immediately activates and displays the CorelMate Docker.
+- **Shape Traversal Resilience**: Added exception guards around shape inspection properties (`IsHidden`, `IsLocked`, `Type`) and combined Layer traversal with `page.Shapes` enumeration to guarantee zero skipped text elements across complex prepress files.
+
 ## CorelMate 1.18.1 (Update 1) - Docker Title, Navbar Integration & Accessibility Fix
 
 - **Docker Title Correction**: Fixed Docker title and vertical tab caption displaying `CorelMate.UI.CorelMatePanel`; now cleanly and permanently displays `CorelMate` across all windows and dockers trays.
