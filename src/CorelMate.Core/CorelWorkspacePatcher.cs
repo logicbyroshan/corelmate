@@ -308,6 +308,11 @@ public static class CorelWorkspacePatcher
             item.SetAttribute(kvp.Key, kvp.Value);
         }
 
+        if (!attrs.ContainsKey("type"))
+        {
+            item.RemoveAttribute("type");
+        }
+
         // Ensure noBmpOnMenu is removed so CorelDRAW displays the icon on the menu
         item.RemoveAttribute("noBmpOnMenu");
 
@@ -317,10 +322,10 @@ public static class CorelWorkspacePatcher
             if (bmpNode == null)
             {
                 bmpNode = item.OwnerDocument.CreateElement("userSmallBitmap");
-                bmpNode.SetAttribute("xmlns:dt", "urn:schemas-microsoft-com:datatypes");
-                bmpNode.SetAttribute("dt:dt", "bin.base64");
                 item.AppendChild(bmpNode);
             }
+            bmpNode.SetAttribute("xmlns:dt", "urn:schemas-microsoft-com:datatypes");
+            bmpNode.SetAttribute("dt", "urn:schemas-microsoft-com:datatypes", "bin.base64");
             bmpNode.InnerText = iconBase64!;
         }
     }

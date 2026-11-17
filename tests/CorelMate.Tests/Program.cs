@@ -208,10 +208,19 @@ try
 		throw new InvalidOperationException("Workspace dynamic macro command item patch failed.");
 	}
 
+	if (!string.IsNullOrEmpty(cmdItem.GetAttribute("type")))
+	{
+		throw new InvalidOperationException("Workspace dynamic macro command item must not have a 'type' attribute.");
+	}
+
 	var bmpNode = cmdItem.SelectSingleNode("userSmallBitmap") as System.Xml.XmlElement;
 	if (bmpNode == null || string.IsNullOrWhiteSpace(bmpNode.InnerText))
 	{
 		throw new InvalidOperationException("Item icon userSmallBitmap was not attached.");
+	}
+	if (bmpNode.GetAttribute("dt", "urn:schemas-microsoft-com:datatypes") != "bin.base64")
+	{
+		throw new InvalidOperationException("Item icon userSmallBitmap missing valid dt:dt='bin.base64' attribute.");
 	}
 
 	// 10. Workspace Archive .cdws In-Place Patch Test
