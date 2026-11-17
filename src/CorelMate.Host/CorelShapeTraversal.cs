@@ -139,7 +139,7 @@ public static class CorelShapeTraversal
         var locked = lockedByAncestor;
         try { if (shape.Locked) locked = true; } catch { }
 
-        nodes.Add(new CorelShapeNode(shape, hiddenByAncestor, lockedByAncestor));
+        nodes.Add(new CorelShapeNode(shape, hidden, locked));
 
         // Track text statistics
         if (shape.Type == cdrShapeType.cdrTextShape && metrics != null)

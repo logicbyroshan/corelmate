@@ -16,6 +16,14 @@ Project branding and open-source documentation details are recorded in [.agents/
  
 Task 9 Modern UI Design System details are recorded in [.agents/CHANGELOG.md](.agents/CHANGELOG.md).
 
+## CorelMate 1.18.1 (Update 3) - Adaptive Light/Dark Theme, Live Connection & Streamlined UI
+
+- **Connection Reliability (Fixed "Offline" Issue)**: Resolved root cause where `Marshal.GetActiveObject` threw `MK_E_UNAVAILABLE` because CorelDRAW does not register in the Windows Running Object Table (ROT). Implemented single-instance COM activation via `Type.GetTypeFromProgID("CorelDRAW.Application")` and `Activator.CreateInstance()`, backed by deferred retry timers and on-demand reconnection. Docker now connects immediately, showing `Connected` and live document information.
+- **Adaptive Light & Dark Themes (Matches CorelDRAW Workspace)**: Added dedicated `LightTheme.xaml` and `DarkTheme.xaml` resource profiles with high-contrast typography and native surface styling. CorelMate automatically detects whether CorelDRAW and Windows are using light or dark mode via `AppsUseLightTheme`, and provides a 1-click ☀️ / 🌙 theme switcher in the Docker header.
+- **Streamlined, Decluttered UI**: Consolidated 6 cramped tabs into 3 spacious, responsive tabs (`🔤 Curves`, `🏷️ Badges`, `⚙️ Tools & Info`). Cleaned up visual hierarchy, removed nested clutter cards, and made 1-click "Convert Text to Curves" the immediate primary workflow.
+- **Hardened Curve Conversion & Auto-Unlock**: Added automatic unlocking of locked shapes (`UnlockLockedShapes`) and multi-stage fallback (PowerClip edit mode and active selection conversion) to guarantee complete curve conversion across nested prepress containers.
+
+
 ## CorelMate 1.18.1 (Update 2) - Docker UI Display & PowerClip Curve Conversion Fix
 
 - **Docker UI Rendering Fix**: Resolved root cause in `CorelMatePanel.xaml` where `Style="{StaticResource CorelMateRootStyle}"` on `<UserControl>` threw a `XamlParseException: Cannot find resource named 'CorelMateRootStyle'`, leaving the Docker interior completely blank. Direct root styling now ensures 100% visible, themed WPF controls upon Docker creation.

@@ -27,8 +27,52 @@ public sealed class CorelDrawHost : ICorelDrawHost
 
     public static CorelDrawHost ConnectToRunningInstance()
     {
-        var application = (CorelApplication)Marshal.GetActiveObject("CorelDRAW.Application");
-        return new CorelDrawHost(application);
+        // 1. Try ROT (Running Object Table) first
+        try
+        {
+            var app = (CorelApplication)Marshal.GetActiveObject("CorelDRAW.Application");
+            if (app != null) return new CorelDrawHost(app);
+        }
+        catch
+        {
+        }
+
+        // 2. CorelDRAW is a single-instance COM server.
+        // Activator.CreateInstance connects to the active running instance if CorelDRAW is running.
+        var appType = Type.GetTypeFromProgID("CorelDRAW.Application");
+        if (appType != null)
+        {
+            try
+            {
+                var comObj = Activator.CreateInstance(appType);
+                if (comObj != null)
+                {
+                    return new CorelDrawHost((CorelApplication)comObj);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        // 3. Fallback to version-specific ProgIDs (v27 down to v19)
+        for (var ver = 28; ver >= 19; ver--)
+        {
+            try
+            {
+                var vType = Type.GetTypeFromProgID($"CorelDRAW.Application.{ver}");
+                if (vType != null)
+                {
+                    var comObj = Activator.CreateInstance(vType);
+                    if (comObj != null) return new CorelDrawHost((CorelApplication)comObj);
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        throw new InvalidOperationException("Could not connect to CorelDRAW instance. Ensure CorelDRAW is running.");
     }
 
     public static CorelDrawHost ConnectToComObject(object comObject)

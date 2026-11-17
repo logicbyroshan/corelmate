@@ -45,7 +45,7 @@ public sealed class CorelTextToCurvesConverter
 
     public CorelTextToCurvesConverter(CorelDrawHost host) => this.host = host ?? throw new ArgumentNullException(nameof(host));
 
-    public CorelCurvePreflight Preflight(CurveConversionScope scope = CurveConversionScope.CurrentPage)
+    public CorelCurvePreflight Preflight(CurveConversionScope scope = CurveConversionScope.CurrentPage, CurveConversionOptions? options = null)
     {
         var document = host.ActiveDocument ?? throw new InvalidOperationException("CorelDRAW does not have an active document.");
         var summary = new CurveConversionSummary
@@ -98,8 +98,19 @@ public sealed class CorelTextToCurvesConverter
             if (shapeType != cdrShapeType.cdrTextShape) continue;
             summary.FoundTextObjects++;
 
-            if (node.IsLocked) summary.LockedTextObjects++;
-            else if (node.IsHidden) summary.HiddenTextObjects++;
+            if (node.IsLocked)
+            {
+                summary.LockedTextObjects++;
+                if (options?.UnlockLockedShapes == true)
+                {
+                    summary.ConvertibleTextObjects++;
+                    targets.Add(node.Shape);
+                }
+            }
+            else if (node.IsHidden)
+            {
+                summary.HiddenTextObjects++;
+            }
             else
             {
                 summary.ConvertibleTextObjects++;
@@ -180,28 +191,53 @@ public sealed class CorelTextToCurvesConverter
             {
                 try
                 {
+                    if (opts.UnlockLockedShapes)
+                    {
+                        try { shape.Locked = false; } catch { }
+                    }
                     shape.ConvertToCurves();
                     converted++;
                 }
                 catch
                 {
-                    // Fallback for nested shapes inside PowerClip containers
+                    // Fallback 1: Nested shapes inside PowerClip containers
+                    var success = false;
                     try
                     {
                         var parent = shape.PowerClipParent;
                         if (parent?.PowerClip != null)
                         {
                             parent.PowerClip.EnterEditMode();
+                            if (opts.UnlockLockedShapes)
+                            {
+                                try { shape.Locked = false; } catch { }
+                            }
                             shape.ConvertToCurves();
                             parent.PowerClip.LeaveEditMode();
                             converted++;
-                        }
-                        else
-                        {
-                            failed++;
+                            success = true;
                         }
                     }
                     catch
+                    {
+                    }
+
+                    // Fallback 2: Select shape and convert selection
+                    if (!success)
+                    {
+                        try
+                        {
+                            shape.CreateSelection();
+                            app.ActiveSelectionRange?.ConvertToCurves();
+                            converted++;
+                            success = true;
+                        }
+                        catch
+                        {
+                        }
+                    }
+
+                    if (!success)
                     {
                         failed++;
                     }

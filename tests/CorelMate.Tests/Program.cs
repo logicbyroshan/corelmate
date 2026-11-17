@@ -69,9 +69,10 @@ var options = new CurveConversionOptions
 {
 	Scope = CurveConversionScope.AllPages,
 	SaveConvertedCopy = true,
-	CopySuffix = "_backup"
+	CopySuffix = "_backup",
+	UnlockLockedShapes = true
 };
-if (options.Scope != CurveConversionScope.AllPages || !options.SaveConvertedCopy || options.CopySuffix != "_backup")
+if (options.Scope != CurveConversionScope.AllPages || !options.SaveConvertedCopy || options.CopySuffix != "_backup" || !options.UnlockLockedShapes)
 {
 	throw new InvalidOperationException("Curve conversion options initialization failed.");
 }
