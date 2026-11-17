@@ -203,7 +203,7 @@ try
 	}
 
 	var cmdItem = wsXmlDoc.SelectSingleNode($"//items/itemData[@guid='{CorelWorkspacePatcher.CmdCurveCurrentPageGuid}']") as System.Xml.XmlElement;
-	if (cmdItem == null || cmdItem.GetAttribute("dynamicCommand") != "ConvertAllToCurves.Converter.CurveCurrentPage")
+	if (cmdItem == null || cmdItem.GetAttribute("dynamicCommand") != "GlobalMacros.CorelMate.CurveCurrentPage")
 	{
 		throw new InvalidOperationException("Workspace dynamic macro command item patch failed.");
 	}
