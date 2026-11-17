@@ -18,7 +18,9 @@ Updated 2026-09-16 during bootstrap.
 - Task 7 adds dependency-free CSV/XLSX import mapped into existing BadgeDataRow values; synthetic parser and validation tests pass.
 - Task 8 audited production state handling and fixed stale UI rows/results after failed capture/import/reset; real v27.1 manual adapter QA passed for 11 badges, invalid preflight, and undo/redo.
 - Task 9 modernized the WPF UI with an Adaptive Pro design system, segmented tab navigation (Badges, Curves, Info), variable chip tags, live metric tiles, polished card surfaces, and styled input controls.
-- CorelMate 0.2.0 engineering audit, redesign, and version adaptation completed:
+- CorelMate 1.18.1 production release established:
+  - Version bumped to 1.18.1 across solution, project properties, and distribution scripts.
+  - Release distribution package `CorelMate-1.18.1-docker.zip` created with verified automated installation and cleanup.
   - Central Compatibility Registry explicitly handles CorelDRAW 2017 to 2026 (v19 to v28), rejecting < v19 as legacy.
   - Native CorelDRAW navigation menu integration deployed via User AppData / Programs Addons (`UserDraw.xslt` + `Coreldrw.addon`) and companion macro (`CorelMate.gms`).
   - Version-adaptive UI with 5 authentic era design profiles (2017 Classic, 2019 Charcoal, 2021 Teal, 2023 Azure, 2026 Adaptive Pro).

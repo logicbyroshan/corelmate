@@ -1,6 +1,6 @@
 param(
     [string]$Configuration = 'Release',
-    [string]$Version = '0.2.0'
+    [string]$Version = '1.18.1'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -45,15 +45,16 @@ Copy-Item (Join-Path $root 'packaging\Install-CorelMate.ps1') $staging
 Copy-Item (Join-Path $root 'packaging\Uninstall-CorelMate.ps1') $staging
 
 @"
-CorelMate 0.2.0 Release Package
+CorelMate 1.18.1 Release Package
 
 Targets: CorelDRAW Graphics Suite 2017 through 2026 (v19 to v28)
 Features:
 - Version-Adaptive UI (2017 Classic, 2019 Charcoal, 2021 Teal, 2023 Azure, 2026 Adaptive Pro)
 - Native CorelDRAW Main Navigation Menu Integration [CorelMate]
+- Page-to-Curves & Multi-Scope Conversion (Current Page, All Pages, Selection)
+- Document Backup Preservation (_curves.cdr) & Atomic Undo Protection
 - Batch Badge Generator (CSV/XLSX import, multi-page planning)
-- Convert Text to Curves (safe preflight, locked/hidden preservation)
-- Document Inspector (shapes breakdown, color model, font analysis)
+- Document & Object Inspector (shapes breakdown, color model, font analysis)
 - Central Compatibility Registry (v19 to v28 validation)
 
 Install:

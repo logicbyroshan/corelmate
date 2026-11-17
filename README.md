@@ -122,7 +122,7 @@ These scripts use COM automation and do not modify CorelDRAW installation files.
 powershell -ExecutionPolicy Bypass -File .\scripts\Build-Release.ps1
 ```
 
-This creates `artifacts\CorelMate-0.1.0-docker.zip`. The package contains the WPF Docker and required managed CorelMate assemblies, plus package-local session install/remove scripts and a README. It excludes source, tests, PDBs, secrets, local paths, and Corel-owned interop assemblies.
+This creates `artifacts\CorelMate-1.18.1-docker.zip`. The package contains the WPF Docker and required managed CorelMate assemblies, plus package-local session install/remove scripts and a README. It excludes source, tests, PDBs, secrets, local paths, and Corel-owned interop assemblies.
 
 Extract the ZIP and run `Install-CorelMate.ps1` or `Uninstall-CorelMate.ps1`. Automatic `.addon` startup is explicitly not claimed because the supported .NET startup mechanism is not verified for v27.1.
 

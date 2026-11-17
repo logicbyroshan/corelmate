@@ -16,6 +16,18 @@ Project branding and open-source documentation details are recorded in [.agents/
  
 Task 9 Modern UI Design System details are recorded in [.agents/CHANGELOG.md](.agents/CHANGELOG.md).
 
+## CorelMate 1.18.1 - Production Release
+
+- **Official Release Designation**: Promoted CorelMate to official release `v1.18.1`.
+- **Reference Extension Reverse Engineering & Audit**: Decompiled and analyzed `CdrPreflight Installer X7-2020` (NSIS installer, MS-OVBA VBA decompilation across 11 modules).
+- **Page-to-Curves & Multi-Scope Conversion**: Native, non-destructive vector curve conversion supporting `CurrentPage`, `AllPages`, and `SelectedObjects`.
+- **Document Safety & Preservation**: Automated pre-conversion backup copy preservation (`_curves.cdr`) via `SaveAsCopy`/`File.Copy` and atomic undo protection (`BeginCommandGroup`/`EndCommandGroup`).
+- **CorelDRAW Navigation Menu Integration**: CorelMate appears as the last main navigation menu item in the CorelDRAW Menu Bar (`f3016f3c-2847-4557-b61a-a2d05319cf18`) with dynamic commands and companion `CorelMate.gms` macro.
+- **Version Adaptation**: Full support across CorelDRAW 2017 through 2026 (v19 to v28) with 5 authentic era design themes.
+- **Batch Badge Generator**: Automated multi-page layout planning with CSV and XLSX spreadsheet data import.
+- **Document & Object Inspector**: Real-time shape enumeration, color model inspection, and unique font discovery.
+- **Hardened Packaging**: Comprehensive distribution packaging with non-elevated installation support (`Install-CorelMate.ps1`).
+
 ## CorelMate 0.2.0 - UI Redesign, Version Adaptation & Native Menu Integration
 
 - **Central Version Compatibility Registry**: Added support and explicit validation for CorelDRAW versions 2017 through 2026 (v19 to v28), with legacy (< v19) rejection and safe detection.
