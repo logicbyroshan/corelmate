@@ -172,3 +172,19 @@ What changed:
 - Expanded `CorelMate.Tests`: Added tests for scope resolution, preflight models, options, and summary metrics.
 
 Testing performed: Solution build passed (0 warnings, 0 errors); smoke test suite passed; release packaging succeeded.
+
+## 2026-11-17: Official Release CorelMate v1.18.1
+
+Task: Package and publish the official production release CorelMate v1.18.1.
+
+Reason: User request to establish and publish the latest official release designated as `CorelMate v1.18.1`.
+
+Files/areas affected: `Directory.Build.props`, `scripts/Build-Release.ps1`, `src/CorelMate.UI/CorelMatePanel.xaml`, `README.md`, `CHANGELOG.md`, `.agent-memory/CURRENT_STATE.md`, `.agent-memory/TASK_HISTORY.md`.
+
+What changed:
+- Promoted solution version from 0.2.0 to 1.18.1 in `Directory.Build.props`.
+- Updated release build script `Build-Release.ps1` to produce `CorelMate-1.18.1-docker.zip`.
+- Updated WPF Docker UI version label to `1.18.1 (Production Release)`.
+- Updated documentation and changelog with full release notes.
+
+Testing performed: Solution build passed (0 warnings, 0 errors); smoke tests passed; release distribution package created and validated.

@@ -605,7 +605,7 @@
                 <TextBlock Grid.Row="2" Grid.Column="1" Text="Main Menu Bar [CorelMate] &amp; Dockers" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
 
                 <TextBlock Grid.Row="3" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
-                <TextBlock Grid.Row="3" Grid.Column="1" Text="0.2.0 (Version-Adaptive Release)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="1.18.1 (Production Release)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
               </Grid>
             </StackPanel>
           </Border>
