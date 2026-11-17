@@ -276,3 +276,21 @@ What changed:
 - Updated documentation and changelog with full release notes.
 
 Testing performed: Solution build passed (0 warnings, 0 errors); smoke tests passed; release distribution package created and validated.
+
+## 2026-11-17: Native GMS Execution Pipeline & Prohibited Icon Elimination
+
+Task: Fix menu actions failing with "red loading spinner / prohibited icon and nothing happens" when clicking CorelMate navbar items.
+
+Reason: User reported clicking navbar items showed a red loading/prohibited icon and nothing happened.
+
+Files/areas affected: `src/CorelMate.Core/CorelWorkspacePatcher.cs`, `src/CorelMate.Host/CorelMenuIntegration.cs`, `tests/CorelMate.Tests/Program.cs`, `assets/gms/CorelMate.gms`, `assets/vba/CorelMate.bas`, `scripts/Install-Dev.ps1`, `packaging/Install-CorelMate.ps1`, `CHANGELOG.md`, `.agent-memory/CURRENT_STATE.md`, `.agent-memory/TASK_HISTORY.md`.
+
+What changed:
+- Diagnosed root cause: CorelDRAW's `dynamicCategory="2cc24a3e-fe24-4708-9a74-9c75406eebcd"` exclusively resolves macros indexed by `GMSManager` from `.gms` files in `Draw\GMS\`. CorelDRAW displayed the default unresolved macro icon (a hand with a red circle, interpreted as a "red load icon") and disabled execution.
+- Generated and verified precompiled `CorelMate.gms` (Project: `CorelMate`, Module: `Workflows`) deploying all 7 macros directly into `Draw\GMS\`.
+- Re-anchored dynamic commands across `CorelWorkspacePatcher.cs`, `CorelMenuIntegration.cs`, and `UserDraw.xslt` to `CorelMate.Workflows.*`.
+- Removed conflicting `type="button"` attribute from macro `itemData` definitions.
+- Hardened `Install-Dev.ps1` and `Install-CorelMate.ps1` to deploy `assets/gms/CorelMate.gms` directly into user AppData `Draw\GMS`.
+- Updated smoke tests in `tests/CorelMate.Tests/Program.cs`.
+
+Testing performed: Solution Release build passed (0 warnings, 0 errors); CorelMate.Tests smoke tests passed; verified fresh CorelDRAW session indexing of all 7 macros under `CorelMate.Workflows.*` in `GMSManager.Projects`; deployed via `Install-Dev.ps1`.
