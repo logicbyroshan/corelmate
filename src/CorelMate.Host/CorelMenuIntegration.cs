@@ -16,7 +16,26 @@ public static class CorelMenuIntegration
     public const string CorelMateMenuFlyoutGuid = CorelWorkspacePatcher.CorelMateMenuFlyoutGuid;
     public const string CorelMateCommandBarGuid = CorelWorkspacePatcher.CorelMateCommandBarGuid;
 
-    // Item GUIDs for menu commands & dockers
+    // Feature 1: Curves
+    public const string FlyoutCurvesGuid        = CorelWorkspacePatcher.FlyoutCurvesGuid;
+    public const string CBarCurvesGuid          = CorelWorkspacePatcher.CBarCurvesGuid;
+    public const string CmdCurveCurrentPageGuid = CorelWorkspacePatcher.CmdCurveCurrentPageGuid;
+    public const string CmdCurveAllPagesGuid    = CorelWorkspacePatcher.CmdCurveAllPagesGuid;
+    public const string CmdCurveSelectionGuid   = CorelWorkspacePatcher.CmdCurveSelectionGuid;
+
+    // Feature 2: Export
+    public const string FlyoutExportGuid        = CorelWorkspacePatcher.FlyoutExportGuid;
+    public const string CBarExportGuid          = CorelWorkspacePatcher.CBarExportGuid;
+    public const string CmdExportIdCardGuid     = CorelWorkspacePatcher.CmdExportIdCardGuid;
+    public const string CmdExportPrintGuid      = CorelWorkspacePatcher.CmdExportPrintGuid;
+
+    // Feature 3: Color
+    public const string FlyoutColorGuid         = CorelWorkspacePatcher.FlyoutColorGuid;
+    public const string CBarColorGuid           = CorelWorkspacePatcher.CBarColorGuid;
+    public const string CmdColorCmykGuid        = CorelWorkspacePatcher.CmdColorCmykGuid;
+    public const string CmdColorRgbGuid         = CorelWorkspacePatcher.CmdColorRgbGuid;
+
+    // Legacy Item GUIDs (retained for binary/library compatibility)
     public const string ItemShowDockerGuid        = CorelWorkspacePatcher.ItemShowDockerGuid;
     public const string ItemConvertPageCurvesGuid = CorelWorkspacePatcher.ItemConvertPageCurvesGuid;
     public const string ItemConvertAllCurvesGuid  = CorelWorkspacePatcher.ItemConvertAllCurvesGuid;
@@ -45,90 +64,106 @@ public static class CorelMenuIntegration
     </xsl:copy>
   </xsl:template>
 
-  <!-- Register CorelMate docker with proper title -->
-  <xsl:template match=""uiConfig/dockers"">
-    <xsl:copy>
-      <xsl:apply-templates select=""node()|@*""/>
-      <xsl:if test=""not(./dockerData[@guid='{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}'])"">
-        <dockerData guid=""{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}"" userCaption=""CorelMate"" caption=""CorelMate"" dock=""fill"" focusStyle=""noThrow"">
-          <container>
-            <item dock=""fill"" guidRef=""eaa2648a-69d1-46dd-8527-9cd9a00c467f""/>
-          </container>
-        </dockerData>
-      </xsl:if>
-    </xsl:copy>
-  </xsl:template>
+  <!-- Remove legacy CorelMate docker registration -->
+  <xsl:template match=""uiConfig/dockers/dockerData[@guid='{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}']""/>
+  <xsl:template match=""//dockerData[@guidRef='{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}']""/>
+  <xsl:template match=""//item[@guidRef='a63f9c4c-item-dock-9ac9-3a15c783d5d4']""/>
+  <xsl:template match=""//item[@guidRef='a63f9c4c-4e91-menu-9ac9-3a15c783d5d7']""/>
+  <xsl:template match=""//commandBarData[@guid='a63f9c4c-cbef-4276-b686-adb4f77c80d6']""/>
 
-  <!-- Register dynamic menu commands and docker toggle in items -->
+  <!-- Register dynamic menu commands in items -->
   <xsl:template match=""uiConfig/items"">
     <xsl:copy>
       <xsl:apply-templates select=""node()|@*""/>
-      <xsl:if test=""not(./itemData[@guid='a63f9c4c-item-dock-9ac9-3a15c783d5d4'])"">
-        <itemData guid=""a63f9c4c-item-dock-9ac9-3a15c783d5d4"" type=""checkButton"" check=""*Docker('{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}')"" userCaption=""CorelMate Docker"" userToolTip=""Open or Toggle CorelMate Docker"" noBmpOnMenu=""true""/>
+
+      <!-- Feature 1: Curves -->
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-flyout-curves-3a15c783d5d1'])"">
+        <itemData guid=""a63f9c4c-flyout-curves-3a15c783d5d1"" flyoutBarRef=""a63f9c4c-cbar-curves-3a15c783d5d1"" type=""flyout"" userCaption=""CorelMate Curves"" userToolTip=""Text-to-Curves Operations"" userCreated=""true"" noBmpOnMenu=""true""/>
       </xsl:if>
-      <xsl:if test=""not(./itemData[@guid='a63f9c4c-4e91-menu-9ac9-3a15c783d5d7'])"">
-        <itemData guid=""a63f9c4c-4e91-menu-9ac9-3a15c783d5d7"" flyoutBarRef=""a63f9c4c-cbef-4276-b686-adb4f77c80d6"" type=""flyout"" userCaption=""CorelMate"" userToolTip=""CorelMate Productivity Suite"" userCreated=""true"" noBmpOnMenu=""true""/>
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-cpage-3a15c783d5d1'])"">
+        <itemData guid=""a63f9c4c-cmd-cpage-3a15c783d5d1"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.CurveCurrentPage"" userCaption=""Curve Current Page"" userToolTip=""Convert all text on current page to curves"" noBmpOnMenu=""true""/>
       </xsl:if>
-      <xsl:if test=""not(./itemData[@guid='a63f9c4c-item-page-9ac9-3a15c783d5d1'])"">
-        <itemData guid=""a63f9c4c-item-page-9ac9-3a15c783d5d1"" dynamicCommand=""CorelMate.ConvertPageToCurves"" userCaption=""Convert Page to Curves"" userToolTip=""Convert all text on active page to curves"" noBmpOnMenu=""true""/>
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-callp-3a15c783d5d2'])"">
+        <itemData guid=""a63f9c4c-cmd-callp-3a15c783d5d2"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.CurveAllPages"" userCaption=""Curve All Pages"" userToolTip=""Convert all text across all pages to curves"" noBmpOnMenu=""true""/>
       </xsl:if>
-      <xsl:if test=""not(./itemData[@guid='a63f9c4c-item-pall-9ac9-3a15c783d5d2'])"">
-        <itemData guid=""a63f9c4c-item-pall-9ac9-3a15c783d5d2"" dynamicCommand=""CorelMate.ConvertAllPagesToCurves"" userCaption=""Convert All Pages to Curves"" userToolTip=""Convert all text across all pages to curves"" noBmpOnMenu=""true""/>
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-csele-3a15c783d5d3'])"">
+        <itemData guid=""a63f9c4c-cmd-csele-3a15c783d5d3"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.CurveSelection"" userCaption=""Curve Selected Objects"" userToolTip=""Convert selected text objects to curves"" noBmpOnMenu=""true""/>
       </xsl:if>
-      <xsl:if test=""not(./itemData[@guid='a63f9c4c-item-psel-9ac9-3a15c783d5d3'])"">
-        <itemData guid=""a63f9c4c-item-psel-9ac9-3a15c783d5d3"" dynamicCommand=""CorelMate.ConvertSelectionToCurves"" userCaption=""Convert Selection to Curves"" userToolTip=""Convert selected text to curves"" noBmpOnMenu=""true""/>
+
+      <!-- Feature 2: Export -->
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-flyout-export-3a15c783d5d2'])"">
+        <itemData guid=""a63f9c4c-flyout-export-3a15c783d5d2"" flyoutBarRef=""a63f9c4c-cbar-export-3a15c783d5d2"" type=""flyout"" userCaption=""CorelMate Export"" userToolTip=""Export as ID Card or Print PDF"" userCreated=""true"" noBmpOnMenu=""true""/>
       </xsl:if>
-      <xsl:if test=""not(./itemData[@guid='a63f9c4c-item-inspect-9ac9-3a15c783d5d5'])"">
-        <itemData guid=""a63f9c4c-item-inspect-9ac9-3a15c783d5d5"" dynamicCommand=""CorelMate.ShowInspector"" userCaption=""Document Inspector"" userToolTip=""Inspect active document metrics"" noBmpOnMenu=""true""/>
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-eidcd-3a15c783d5d4'])"">
+        <itemData guid=""a63f9c4c-cmd-eidcd-3a15c783d5d4"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.ExportAsIdCard"" userCaption=""Export As ID Card"" userToolTip=""Export ID card metadata (JSON) and editable vector PDF template"" noBmpOnMenu=""true""/>
       </xsl:if>
-      <xsl:if test=""not(./itemData[@guid='a63f9c4c-item-badge-9ac9-3a15c783d5d6'])"">
-        <itemData guid=""a63f9c4c-item-badge-9ac9-3a15c783d5d6"" dynamicCommand=""CorelMate.ShowBadges"" userCaption=""Badge Generator"" userToolTip=""Generate badges from layout and data"" noBmpOnMenu=""true""/>
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-eprnt-3a15c783d5d5'])"">
+        <itemData guid=""a63f9c4c-cmd-eprnt-3a15c783d5d5"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.ExportAsPrint"" userCaption=""Export As Print"" userToolTip=""Export print-ready CMYK PDF with text curved"" noBmpOnMenu=""true""/>
       </xsl:if>
-      <xsl:if test=""not(./itemData[@guid='a63f9c4c-item-about-9ac9-3a15c783d5d7'])"">
-        <itemData guid=""a63f9c4c-item-about-9ac9-3a15c783d5d7"" dynamicCommand=""CorelMate.ShowAbout"" userCaption=""About CorelMate"" userToolTip=""About CorelMate"" noBmpOnMenu=""true""/>
+
+      <!-- Feature 3: Color -->
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-flyout-color-3a15c783d5d3'])"">
+        <itemData guid=""a63f9c4c-flyout-color-3a15c783d5d3"" flyoutBarRef=""a63f9c4c-cbar-color-3a15c783d5d3"" type=""flyout"" userCaption=""CorelMate Color"" userToolTip=""Convert colors and bitmaps to CMYK or RGB"" userCreated=""true"" noBmpOnMenu=""true""/>
+      </xsl:if>
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-ccmyk-3a15c783d5d6'])"">
+        <itemData guid=""a63f9c4c-cmd-ccmyk-3a15c783d5d6"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.ConvertToCmyk"" userCaption=""Convert to CMYK"" userToolTip=""Convert all vector colors and bitmap images to CMYK"" noBmpOnMenu=""true""/>
+      </xsl:if>
+      <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-crgbb-3a15c783d5d7'])"">
+        <itemData guid=""a63f9c4c-cmd-crgbb-3a15c783d5d7"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.ConvertToRgb"" userCaption=""Convert to RGB"" userToolTip=""Convert all vector colors and bitmap images to RGB"" noBmpOnMenu=""true""/>
       </xsl:if>
     </xsl:copy>
   </xsl:template>
 
-  <!-- Append CorelMate flyout menu commandBarData -->
+  <!-- Append CommandBars for the 3 flyout menus -->
   <xsl:template match=""uiConfig/commandBars"">
     <xsl:copy>
       <xsl:apply-templates select=""node()|@*""/>
-      <xsl:if test=""not(./commandBarData[@guid='a63f9c4c-cbef-4276-b686-adb4f77c80d6'])"">
-        <commandBarData guid=""a63f9c4c-cbef-4276-b686-adb4f77c80d6"" type=""menu"" nonLocalizableName=""CorelMate"" flyout=""true"">
+
+      <!-- Curves command bar -->
+      <xsl:if test=""not(./commandBarData[@guid='a63f9c4c-cbar-curves-3a15c783d5d1'])"">
+        <commandBarData guid=""a63f9c4c-cbar-curves-3a15c783d5d1"" type=""menu"" nonLocalizableName=""CorelMate Curves"" flyout=""true"">
           <menu>
-            <item guidRef=""a63f9c4c-item-dock-9ac9-3a15c783d5d4""/>
-            <item guidRef=""266435b4-6e53-460f-9fa7-f45be187d400""/>
-            <item guidRef=""a63f9c4c-item-page-9ac9-3a15c783d5d1""/>
-            <item guidRef=""a63f9c4c-item-pall-9ac9-3a15c783d5d2""/>
-            <item guidRef=""a63f9c4c-item-psel-9ac9-3a15c783d5d3""/>
-            <item guidRef=""266435b4-6e53-460f-9fa7-f45be187d400""/>
-            <item guidRef=""a63f9c4c-item-inspect-9ac9-3a15c783d5d5""/>
-            <item guidRef=""a63f9c4c-item-badge-9ac9-3a15c783d5d6""/>
-            <item guidRef=""266435b4-6e53-460f-9fa7-f45be187d400""/>
-            <item guidRef=""a63f9c4c-item-about-9ac9-3a15c783d5d7""/>
+            <item guidRef=""a63f9c4c-cmd-cpage-3a15c783d5d1""/>
+            <item guidRef=""a63f9c4c-cmd-callp-3a15c783d5d2""/>
+            <item guidRef=""a63f9c4c-cmd-csele-3a15c783d5d3""/>
+          </menu>
+        </commandBarData>
+      </xsl:if>
+
+      <!-- Export command bar -->
+      <xsl:if test=""not(./commandBarData[@guid='a63f9c4c-cbar-export-3a15c783d5d2'])"">
+        <commandBarData guid=""a63f9c4c-cbar-export-3a15c783d5d2"" type=""menu"" nonLocalizableName=""CorelMate Export"" flyout=""true"">
+          <menu>
+            <item guidRef=""a63f9c4c-cmd-eidcd-3a15c783d5d4""/>
+            <item guidRef=""a63f9c4c-cmd-eprnt-3a15c783d5d5""/>
+          </menu>
+        </commandBarData>
+      </xsl:if>
+
+      <!-- Color command bar -->
+      <xsl:if test=""not(./commandBarData[@guid='a63f9c4c-cbar-color-3a15c783d5d3'])"">
+        <commandBarData guid=""a63f9c4c-cbar-color-3a15c783d5d3"" type=""menu"" nonLocalizableName=""CorelMate Color"" flyout=""true"">
+          <menu>
+            <item guidRef=""a63f9c4c-cmd-ccmyk-3a15c783d5d6""/>
+            <item guidRef=""a63f9c4c-cmd-crgbb-3a15c783d5d7""/>
           </menu>
         </commandBarData>
       </xsl:if>
     </xsl:copy>
   </xsl:template>
 
-  <!-- Append CorelMate as the LAST main navigation menu item in the Menu Bar -->
+  <!-- Append the 3 items to menubar -->
   <xsl:template match=""//commandBarData[@guid='f3016f3c-2847-4557-b61a-a2d05319cf18']/menubar/modeData"">
     <xsl:copy>
       <xsl:apply-templates select=""node()|@*""/>
-      <xsl:if test=""not(./item[@guidRef='a63f9c4c-4e91-menu-9ac9-3a15c783d5d7'])"">
-        <item guidRef=""a63f9c4c-4e91-menu-9ac9-3a15c783d5d7""/>
+      <xsl:if test=""not(./item[@guidRef='a63f9c4c-flyout-curves-3a15c783d5d1'])"">
+        <item guidRef=""a63f9c4c-flyout-curves-3a15c783d5d1""/>
       </xsl:if>
-    </xsl:copy>
-  </xsl:template>
-
-  <!-- Add CorelMate Docker to Window Menu -->
-  <xsl:template match=""//modeData[@guid='6c91d5ab-d648-4364-96fb-3e71bcfaf70d']"">
-    <xsl:copy>
-      <xsl:apply-templates select=""node()|@*""/>
-      <xsl:if test=""not(./item[@guidRef='a63f9c4c-item-dock-9ac9-3a15c783d5d4'])"">
-        <item guidRef=""a63f9c4c-item-dock-9ac9-3a15c783d5d4""/>
+      <xsl:if test=""not(./item[@guidRef='a63f9c4c-flyout-export-3a15c783d5d2'])"">
+        <item guidRef=""a63f9c4c-flyout-export-3a15c783d5d2""/>
+      </xsl:if>
+      <xsl:if test=""not(./item[@guidRef='a63f9c4c-flyout-color-3a15c783d5d3'])"">
+        <item guidRef=""a63f9c4c-flyout-color-3a15c783d5d3""/>
       </xsl:if>
     </xsl:copy>
   </xsl:template>

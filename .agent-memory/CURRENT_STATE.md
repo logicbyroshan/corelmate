@@ -40,3 +40,12 @@ Updated 2026-09-16 during bootstrap.
   - Connection Reliability & Offline Bug Fix: Replaced failing `Marshal.GetActiveObject` with single-instance COM activation via `Type.GetTypeFromProgID("CorelDRAW.Application")` and `Activator.CreateInstance()`, supported by deferred retry timers and on-demand reconnection on every user action. Docker now reliably shows "Connected" and live active document info.
   - Light & Dark Adaptive Theming: Implemented `LightTheme.xaml` and `DarkTheme.xaml` palettes with auto-detection of Windows / CorelDRAW light mode (`AppsUseLightTheme`) and a 1-click ☀️ / 🌙 theme toggle button in the Docker header.
   - Streamlined 3-Tab UI Redesign: Consolidated 6 cluttered tabs into 3 spacious, responsive tabs (`🔤 Curves`, `🏷️ Badges`, `⚙️ Tools & Info`), making "Convert Text to Curves" the immediate 1-click primary view.
+  - Direct Navbar Integration & Zero Docker Architecture:
+    - Completely removed Docker requirements per user instruction. No Docker window is opened or registered.
+    - Added 3 distinct top navbar menus on the main menu bar:
+      - `CorelMate Curves`: Curve Current Page, Curve All Pages, Curve Selected Objects.
+      - `CorelMate Export`: Export As ID Card (JSON metadata + editable PDF), Export As Print (Curves + CMYK).
+      - `CorelMate Color`: Convert to CMYK, Convert to RGB (vectors, outlines, fountain fills, and bitmaps).
+    - Every action requests explicit user confirmation (`MsgBox` Yes/No) prior to execution.
+    - Implemented native MS-OVBA binary compressor in `scripts/Build-Gms.py` deploying spec-compliant `.gms` files to user profile and repository assets.
+    - Automated workspace patching in `CorelWorkspacePatcher.cs` and deployed cleanly via `Install-Dev.ps1` and `Install-CorelMate.ps1`. All unit and smoke tests passing.
