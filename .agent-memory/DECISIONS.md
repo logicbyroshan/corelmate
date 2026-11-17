@@ -59,3 +59,15 @@ Reason: CorelDRAW's native framework natively parses Addon XSLT transforms durin
 Alternatives: Pure Win32 hooking or manual workspace editing.
 
 Consequences: Clean uninstall requires removing both the Addon directory and the GMS companion macro.
+
+## 2026-11-17: Page-to-Curves Architecture & Reference Reverse Engineering
+
+Decision: Adopt recursive in-place shape traversal and host optimization patterns observed from reverse-engineering `CdrPreflight`, but improve safety with non-destructive group preservation, document copy preservation (`SaveAsCopy`/`File.Copy` with `_curves.cdr`), atomic undo command grouping, and WPF-based multi-scope preflight.
+
+Context: Users require converting text to curves across whole pages, selections, or full documents for prepress/preflight while preserving layout hierarchy and original document copies. CdrPreflight showed effective optimization flags (`Optimization = True`, `EventsEnabled = False`) but used obsolete IE browser dockers, lacked document backups, and swallowed errors silently.
+
+Reason: Non-destructive in-place conversion preserves groups, PowerClips, and text-on-path without destructive ungrouping. Document copy preservation prevents accidental irreversible data loss.
+
+Alternatives: Blind ungrouping (breaks visual effects/clipping), rasterization (destroys vector scalability), or external PDF conversion.
+
+Consequences: COM calls remain strictly isolated in `CorelMate.Host`; `CorelMate.Curves` holds pure preflight and summary contracts.

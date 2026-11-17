@@ -41,9 +41,43 @@ if (multiPage.Pages.Count != 2 || multiPage.Pages[1].Positions.Count != 1) throw
 try { PlaceholderParser.Parse("{{student name}}"); throw new InvalidOperationException("Invalid placeholder was accepted."); } catch (FormatException) { }
 try { new BadgeDataRow(values, -1); throw new InvalidOperationException("Negative quantity was accepted."); } catch (ArgumentOutOfRangeException) { }
 
-// 4. Text to Curves preflight model
-var curveSummary = new CurveConversionSummary { FoundTextObjects = 5, ConvertibleTextObjects = 3, LockedTextObjects = 1, HiddenTextObjects = 1 };
-if (curveSummary.SkippedTextObjects != 2) throw new InvalidOperationException("Curve conversion summary failed.");
+// 4. Text to Curves Preflight & Scope Models
+var curveSummary = new CurveConversionSummary
+{
+	Scope = CurveConversionScope.CurrentPage,
+	PagesProcessed = 1,
+	FoundTextObjects = 12,
+	ArtisticTextCount = 7,
+	ParagraphTextCount = 5,
+	TextOnPathCount = 2,
+	GroupsInspected = 4,
+	PowerClipsInspected = 2,
+	ConvertibleTextObjects = 9,
+	LockedTextObjects = 2,
+	HiddenTextObjects = 1,
+	UnsupportedTextObjects = 0,
+	ConvertedTextObjects = 9,
+	FailedTextObjects = 0,
+	SavedCopyPath = @"C:\Artwork\Doc_curves.cdr",
+	ExecutionDurationMs = 120
+};
+if (curveSummary.SkippedTextObjects != 3) throw new InvalidOperationException("Curve conversion skipped count failed.");
+if (!curveSummary.HasTargets) throw new InvalidOperationException("Curve conversion HasTargets failed.");
+if (curveSummary.Scope != CurveConversionScope.CurrentPage) throw new InvalidOperationException("Curve conversion scope failed.");
+
+var options = new CurveConversionOptions
+{
+	Scope = CurveConversionScope.AllPages,
+	SaveConvertedCopy = true,
+	CopySuffix = "_backup"
+};
+if (options.Scope != CurveConversionScope.AllPages || !options.SaveConvertedCopy || options.CopySuffix != "_backup")
+{
+	throw new InvalidOperationException("Curve conversion options initialization failed.");
+}
+
+var emptySummary = new CurveConversionSummary();
+if (emptySummary.HasTargets || emptySummary.SkippedTextObjects != 0) throw new InvalidOperationException("Empty curve summary state failed.");
 
 // 5. Version Compatibility Registry & Version Extraction Tests
 if (CorelCompatibilityRegistry.ExtractMajorVersion("Version 27.1.0.129") != 27) throw new InvalidOperationException("Version extraction failed for v27.1.");

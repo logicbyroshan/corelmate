@@ -152,3 +152,23 @@ What changed:
 - Restyled data entry table, layout form inputs, and buttons with primary/secondary hierarchy and interactive hover states.
 
 Testing performed: Release solution build passed with 0 warnings/errors; smoke tests passed; release packaging succeeded.
+
+## 2026-11-17: Reference Extension Reverse Engineering & Page-To-Curves Implementation
+
+Task: Reverse-engineer reference extension `CdrPreflight Installer X7-2020` and implement a native, version-compatible Page-to-Curves, All-Pages-to-Curves, and Selection-to-Curves feature in CorelMate.
+
+Reason: Fulfill user requirement to evaluate reference extension architecture, understand its curve conversion mechanisms, address its shortcomings, and build an independent, robust, non-destructive text-to-curves solution with document preservation.
+
+Files/areas affected: `src/CorelMate.Curves/ConvertTextToCurvesService.cs`, `src/CorelMate.Host/CorelShapeTraversal.cs`, `src/CorelMate.Host/CorelTextToCurvesConverter.cs`, `src/CorelMate.Host/CorelMenuIntegration.cs`, `src/CorelMate.UI/CorelMatePanel.xaml`, `src/CorelMate.UI/CorelMatePanel.cs`, `tests/CorelMate.Tests/Program.cs`, `.agent-memory/`, `CHANGELOG.md`.
+
+What changed:
+- Extracted and reverse-engineered `CdrPreflight Installer X7-2020` (NSIS-3 extraction, MS-OVBA decompression of 11 VBA modules).
+- Analyzed technical structure: IE MSHTML browser docker, GMS automation, recursive `s.Shapes.All` and `s.PowerClip.Shapes.All` traversal, `BeginCommandGroup` + optimization flag boosting.
+- Enhanced `CorelMate.Curves`: Added `CurveConversionScope` (`SelectedObjects`, `CurrentPage`, `AllPages`), `CurveConversionOptions`, and extended `CurveConversionSummary` with detailed preflight/execution metrics.
+- Enhanced `CorelMate.Host`: Upgraded `CorelShapeTraversal` to support Page and Document traversal, recursive group preservation without destructive ungrouping, PowerClip inspection, and layer lock/visibility tracking.
+- Upgraded `CorelTextToCurvesConverter`: Added multi-scope preflight, document copy preservation (`SaveAsCopy`/`File.Copy` with `_curves.cdr` suffix), atomic undo command grouping, performance optimization toggling, and verification.
+- Updated `CorelMenuIntegration`: Added native menu commands in `UserDraw.xslt` and companion macro subs in `CorelMate.gms` (`ConvertPageToCurves`, `ConvertAllPagesToCurves`, `ConvertSelectionToCurves`).
+- Updated `CorelMate.UI`: Redesigned Curves tab with target scope selector, backup copy checkbox, preflight analysis breakdown, and conversion results.
+- Expanded `CorelMate.Tests`: Added tests for scope resolution, preflight models, options, and summary metrics.
+
+Testing performed: Solution build passed (0 warnings, 0 errors); smoke test suite passed; release packaging succeeded.

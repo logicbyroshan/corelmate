@@ -8,6 +8,7 @@ using System.Windows.Media;
 using Microsoft.Win32;
 using CorelMate.Badges;
 using CorelMate.Core;
+using CorelMate.Curves;
 using CorelMate.Host;
 using CorelMate.UI.Themes;
 
@@ -583,33 +584,97 @@ public sealed partial class CorelMatePanel : UserControl
 
     #region Convert Text To Curves Feature
 
+    private CurveConversionScope GetSelectedScope()
+    {
+        if (ScopeSelectionRadio?.IsChecked == true) return CurveConversionScope.SelectedObjects;
+        if (ScopeAllPagesRadio?.IsChecked == true) return CurveConversionScope.AllPages;
+        return CurveConversionScope.CurrentPage;
+    }
+
+    private void PreflightCurvesButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (curvesConverter == null) throw new InvalidOperationException("CorelDRAW is not connected.");
+            var scope = GetSelectedScope();
+            var preflight = curvesConverter.Preflight(scope);
+
+            CurvesMetricsGrid.Visibility = Visibility.Visible;
+            CurvesFoundCountText.Text = preflight.Summary.FoundTextObjects.ToString();
+            CurvesConvertibleCountText.Text = preflight.Summary.ConvertibleTextObjects.ToString();
+            CurvesGroupsCountText.Text = preflight.Summary.GroupsInspected.ToString();
+            CurvesLockedCountText.Text = preflight.Summary.LockedTextObjects.ToString();
+
+            var scopeDesc = scope == CurveConversionScope.CurrentPage ? "current page"
+                : scope == CurveConversionScope.SelectedObjects ? "selection" : "entire document (" + preflight.Summary.PagesProcessed + " pages)";
+
+            CurvesPreflightDetailText.Visibility = Visibility.Visible;
+            CurvesPreflightDetailText.Text = "Scope: " + scopeDesc + " | Artistic: " + preflight.Summary.ArtisticTextCount + ", Paragraph: " + preflight.Summary.ParagraphTextCount + ", PowerClips: " + preflight.Summary.PowerClipsInspected;
+
+            if (preflight.Summary.ConvertibleTextObjects == 0)
+            {
+                CurvesResultText.Text = "No convertible text found in " + scopeDesc + "." + (preflight.Summary.SkippedTextObjects > 0 ? " (" + preflight.Summary.SkippedTextObjects + " skipped/locked)" : "");
+            }
+            else
+            {
+                CurvesResultText.Text = "Preflight complete: " + preflight.Summary.ConvertibleTextObjects + " text object(s) ready for conversion in " + scopeDesc + ".";
+            }
+        }
+        catch (Exception ex)
+        {
+            CurvesResultText.Text = ex is InvalidOperationException ? ex.Message : "Could not complete preflight: " + ex.Message;
+        }
+    }
+
     private void ConvertCurvesButton_Click(object sender, RoutedEventArgs e)
     {
         try
         {
             if (curvesConverter == null) throw new InvalidOperationException("CorelDRAW is not connected.");
-            var preflight = curvesConverter.PreflightSelection();
+            var scope = GetSelectedScope();
+            var preflight = curvesConverter.Preflight(scope);
+
+            CurvesMetricsGrid.Visibility = Visibility.Visible;
+            CurvesFoundCountText.Text = preflight.Summary.FoundTextObjects.ToString();
+            CurvesConvertibleCountText.Text = preflight.Summary.ConvertibleTextObjects.ToString();
+            CurvesGroupsCountText.Text = preflight.Summary.GroupsInspected.ToString();
+            CurvesLockedCountText.Text = preflight.Summary.LockedTextObjects.ToString();
+
+            var scopeDesc = scope == CurveConversionScope.CurrentPage ? "current page"
+                : scope == CurveConversionScope.SelectedObjects ? "selection" : "all pages (" + preflight.Summary.PagesProcessed + " pages)";
+
             if (preflight.Summary.ConvertibleTextObjects == 0)
             {
-                CurvesResultText.Text = "No convertible text objects found in selected artwork.";
-                if (preflight.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + preflight.Summary.SkippedTextObjects + " text object(s) skipped).";
+                CurvesResultText.Text = "No convertible text objects found in " + scopeDesc + ".";
+                if (preflight.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + preflight.Summary.SkippedTextObjects + " text object(s) skipped/locked).";
                 return;
             }
 
-            var confirmation = MessageBox.Show(
-                "Convert " + preflight.Summary.ConvertibleTextObjects + " text object(s) to curves?\r\n\r\nNote: Text will no longer be editable as text.",
-                "CorelMate: Convert Text to Curves",
-                MessageBoxButton.OKCancel,
-                MessageBoxImage.Question);
+            var saveCopy = CurvesSaveCopyCheck?.IsChecked == true;
+            var prompt = "Convert " + preflight.Summary.ConvertibleTextObjects + " text object(s) to curves in " + scopeDesc + "?\r\n\r\n"
+                       + (saveCopy ? "✓ A backup copy (_curves.cdr) will be saved first.\r\n\r\n" : "")
+                       + "Note: Text will no longer be editable as text. You can undo this with Ctrl+Z.";
+
+            var confirmation = MessageBox.Show(prompt, "CorelMate: Convert Text to Curves", MessageBoxButton.OKCancel, MessageBoxImage.Question);
             if (confirmation != MessageBoxResult.OK) return;
 
-            var result = curvesConverter.Convert(preflight);
-            CurvesResultText.Text = "✓ " + result.ConvertedTextObjects + " text object(s) successfully converted to curves.";
-            if (result.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + result.Summary.SkippedTextObjects + " skipped).";
+            var options = new CurveConversionOptions
+            {
+                Scope = scope,
+                SaveConvertedCopy = saveCopy
+            };
+
+            var result = curvesConverter.Convert(preflight, options);
+            var msg = "✓ " + result.ConvertedTextObjects + " text object(s) successfully converted to curves in " + result.Summary.ExecutionDurationMs + "ms.";
+            if (result.FailedTextObjects > 0) msg += " (" + result.FailedTextObjects + " failed).";
+            if (result.Summary.SkippedTextObjects > 0) msg += " (" + result.Summary.SkippedTextObjects + " skipped/locked).";
+            if (!string.IsNullOrEmpty(result.Summary.SavedCopyPath)) msg += "\r\n💾 Backup saved: " + Path.GetFileName(result.Summary.SavedCopyPath);
+
+            CurvesResultText.Text = msg;
         }
         catch (Exception exception)
         {
-            CurvesResultText.Text = exception is InvalidOperationException ? exception.Message : "CorelDRAW could not complete the text conversion. Verify the selected artwork is still available.";
+            CurvesResultText.Text = exception is InvalidOperationException ? exception.Message : "CorelDRAW could not complete the text conversion: " + exception.Message;
         }
     }
 
