@@ -16,6 +16,14 @@ Project branding and open-source documentation details are recorded in [.agents/
  
 Task 9 Modern UI Design System details are recorded in [.agents/CHANGELOG.md](.agents/CHANGELOG.md).
 
+## CorelMate 1.18.1 (Update 7) - Native GMS Execution Pipeline & Prohibited Icon Elimination
+
+- **Root Cause Resolution for "Red Load Icon / Prohibited Action"**: Resolved the issue where clicking any CorelMate navbar item showed a red prohibited/loading icon and failed to trigger. CorelDRAW's `dynamicCategory="2cc24a3e-fe24-4708-9a74-9c75406eebcd"` exclusively resolves macros indexed by `GMSManager` from `.gms` files located in `Draw\GMS\`. Binding to `GlobalMacros` failed to index under this category, falling back to the default unresolved macro icon (hand with red circle) and disabling execution.
+- **Dedicated Precompiled `CorelMate.gms` Companion**: Generated and deployed a 100% native compiled `CorelMate.gms` with project name `CorelMate` and module `Workflows` directly into `Draw\GMS\CorelMate.gms`. Verified with CorelDRAW COM `GMSManager.Projects` fresh session indexing.
+- **Cleaned Dynamic Command Bindings**: Re-anchored all 7 sub-commands to `CorelMate.Workflows.*` (`CurveCurrentPage`, `CurveAllPages`, `CurveSelection`, `ExportAsIdCard`, `ExportAsPrint`, `ConvertToCmyk`, `ConvertToRgb`).
+- **Removed Conflicting `type="button"`**: Stripped conflicting `type="button"` attribute from `itemData` definitions across `UserDraw.xslt` and `CorelWorkspacePatcher.cs`, aligning with standard CorelDRAW dynamic category macro items.
+- **Installer & Deployment Pipeline Updated**: Hardened `Install-Dev.ps1`, `Install-CorelMate.ps1`, and `CorelMenuIntegration.cs` to deploy the binary `assets/gms/CorelMate.gms` directly into user AppData `Draw\GMS` without corrupting OLE headers.
+
 ## CorelMate 1.18.1 (Update 6) - GlobalMacros Companion Engine Binding & Execution Fix
 
 - **Resolved "Red Loading Spinner & Nothing Happens" Issue**: Diagnosed and fixed the failure mode where clicking CorelMate navbar commands resulted in a loading spinner followed by no execution. Commands were previously pointing to `ConvertAllToCurves.Converter.*`, which resolved to the locked legacy GMS in Program Files that lacked the new procedures.

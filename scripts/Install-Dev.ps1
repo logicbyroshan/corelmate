@@ -68,9 +68,24 @@ if ($TargetVersion) {
 
 Write-Host "Targeting CorelDRAW v$($selected.Major) at '$($selected.ProgramsDir)'" -ForegroundColor Green
 
-# 1. Deploy GlobalMacros.gms and import CorelMate.bas into active CorelDRAW VBA
-Write-Host "Deploying CorelMate native companion macros into GlobalMacros..." -ForegroundColor Cyan
+# 1. Deploy CorelMate.gms and companion macros
+Write-Host "Deploying CorelMate native companion macros into Draw\GMS and GlobalMacros..." -ForegroundColor Cyan
 $appData = [Environment]::GetFolderPath([Environment+SpecialFolder]::ApplicationData)
+
+# Deploy precompiled CorelMate.gms directly into all Draw\GMS folders
+$srcCorelMateGms = Join-Path $root "assets\gms\CorelMate.gms"
+if (Test-Path $srcCorelMateGms) {
+    $drawRoots = Get-ChildItem -Path (Join-Path $appData "Corel") -Filter "Draw" -Recurse -Depth 4 -ErrorAction SilentlyContinue
+    foreach ($dRoot in $drawRoots) {
+        try {
+            $gmsFolder = Join-Path $dRoot.FullName "GMS"
+            if (-not (Test-Path $gmsFolder)) { New-Item -ItemType Directory -Path $gmsFolder -Force | Out-Null }
+            $destGms = Join-Path $gmsFolder "CorelMate.gms"
+            Copy-Item -Path $srcCorelMateGms -Destination $destGms -Force
+            Write-Host "  [OK] Deployed CorelMate.gms to: $destGms" -ForegroundColor Green
+        } catch {}
+    }
+}
 
 # Copy pre-compiled GlobalMacros.gms asset
 $srcGlobalMacros = Join-Path $root "assets\gms\GlobalMacros.gms"
@@ -93,16 +108,15 @@ try {
     $basFile = Join-Path $root "assets\vba\CorelMate.bas"
     if (Test-Path $basFile) {
         foreach ($vp in $app.VBE.VBProjects) {
-            if ($vp.Name -eq "GlobalMacros") {
+            if ($vp.Name -eq "GlobalMacros" -or $vp.Name -eq "CorelMate") {
                 foreach ($c in $vp.VBComponents) {
-                    if ($c.Name -eq "CorelMate") {
+                    if ($c.Name -eq "CorelMate" -or $c.Name -eq "Workflows") {
                         $vp.VBComponents.Remove($c)
                         break
                     }
                 }
                 $vp.VBComponents.Import($basFile) | Out-Null
-                Write-Host "  [OK] Live CorelMate VBA module imported into active GlobalMacros project" -ForegroundColor Green
-                break
+                Write-Host "  [OK] Live CorelMate VBA module imported into active $($vp.Name) project" -ForegroundColor Green
             }
         }
     }

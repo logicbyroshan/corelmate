@@ -1,4 +1,4 @@
-Attribute VB_Name = "CorelMate"
+Attribute VB_Name = "Workflows"
 Option Explicit
 
 ' =========================================================================

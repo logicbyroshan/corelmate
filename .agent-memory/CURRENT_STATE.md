@@ -54,8 +54,10 @@ Updated 2026-09-16 during bootstrap.
     - Positioned `CorelMate` navbar menu immediately before `Help` (`... | Window | CorelMate | Help`) across Welcome Screen (`6d1d9e94-13f3-4517-a976-ba9154671db4`) and Document Open (`76d73481-9076-44c9-821c-52de9408cce2`) modes.
     - Attached authentic 16x16 `WCmnUI_UIItemBmp` base64 bitmaps (`userSmallBitmap`) in `CorelMateIcons.cs` for CorelMate, Curves, Export, Color, and all individual sub-commands.
     - Hardened PowerShell install scripts with ASCII-safe strings to prevent CP1252 multi-byte quote interpretation issues. Fully built and verified against live workspace `_default.cdws`.
-  - GlobalMacros Companion Engine Binding & Execution Fix:
-    - Fixed root cause of menu actions failing with "red loading spinner and nothing happens": dynamicCommands previously addressed `ConvertAllToCurves.Converter.*`, which mapped to a locked legacy macro in Program Files without the new subroutines.
-    - Re-bound all 7 command items in `CorelWorkspacePatcher.cs` and `CorelMenuIntegration.cs` to `GlobalMacros.CorelMate.*`.
-    - Integrated native `CorelMate.bas` source in `assets/vba/` and verified compiled `GlobalMacros.gms` asset in `assets/gms/`.
-    - Live import and GMS deployment tested and verified; commands now trigger immediate execution with native confirmation dialogs.
+  - Native GMS Execution Pipeline & Prohibited Icon Elimination:
+    - Diagnosed and fixed root cause of "red loading spinner & prohibited click" on menu actions: CorelDRAW's `dynamicCategory="2cc24a3e-fe24-4708-9a74-9c75406eebcd"` strictly resolves macros indexed by `GMSManager` from `.gms` files in `Draw\GMS\`. Binding to `GlobalMacros` failed to index under this category, falling back to the default unresolved macro icon (hand with red circle) and disabling execution.
+    - Generated and deployed a 100% native compiled `CorelMate.gms` (Project: `CorelMate`, Module: `Workflows`) with all 7 macros verified in fresh CorelDRAW sessions.
+    - Re-anchored all 7 command items in `CorelWorkspacePatcher.cs` and `CorelMenuIntegration.cs` to `CorelMate.Workflows.*`.
+    - Removed conflicting `type="button"` attributes from `itemData` elements, aligning with CorelDRAW dynamic category macro items.
+    - Updated `Install-Dev.ps1`, `Install-CorelMate.ps1`, and `CorelMenuIntegration.cs` to deploy the binary `assets/gms/CorelMate.gms` directly into user AppData `Draw\GMS` without corrupting OLE headers.
+    - Tested and verified in fresh CorelDRAW session; commands now trigger immediate execution with native confirmation dialogs.

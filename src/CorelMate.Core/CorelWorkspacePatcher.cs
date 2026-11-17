@@ -118,24 +118,21 @@ public static class CorelWorkspacePatcher
             }, CorelMateIcons.Curves);
             EnsureItemData(itemsNode, CmdCurveCurrentPageGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["dynamicCommand"] = "GlobalMacros.CorelMate.CurveCurrentPage",
+                ["dynamicCommand"] = "CorelMate.Workflows.CurveCurrentPage",
                 ["dynamicCategory"] = MacroCategoryGuid,
                 ["userCaption"] = "Curve Current Page",
                 ["userToolTip"] = "Convert all text on current page to curves"
             }, CorelMateIcons.CurveCurrentPage);
             EnsureItemData(itemsNode, CmdCurveAllPagesGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["dynamicCommand"] = "GlobalMacros.CorelMate.CurveAllPages",
+                ["dynamicCommand"] = "CorelMate.Workflows.CurveAllPages",
                 ["dynamicCategory"] = MacroCategoryGuid,
                 ["userCaption"] = "Curve All Pages",
                 ["userToolTip"] = "Convert all text across all pages to curves"
             }, CorelMateIcons.CurveAllPages);
             EnsureItemData(itemsNode, CmdCurveSelectionGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["dynamicCommand"] = "GlobalMacros.CorelMate.CurveSelection",
+                ["dynamicCommand"] = "CorelMate.Workflows.CurveSelection",
                 ["dynamicCategory"] = MacroCategoryGuid,
                 ["userCaption"] = "Curve Selected Objects",
                 ["userToolTip"] = "Convert selected text objects to curves"
@@ -152,16 +149,14 @@ public static class CorelWorkspacePatcher
             }, CorelMateIcons.Export);
             EnsureItemData(itemsNode, CmdExportIdCardGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["dynamicCommand"] = "GlobalMacros.CorelMate.ExportAsIdCard",
+                ["dynamicCommand"] = "CorelMate.Workflows.ExportAsIdCard",
                 ["dynamicCategory"] = MacroCategoryGuid,
                 ["userCaption"] = "Export As ID Card",
                 ["userToolTip"] = "Export ID card template metadata (JSON) and editable vector PDF"
             }, CorelMateIcons.ExportIdCard);
             EnsureItemData(itemsNode, CmdExportPrintGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["dynamicCommand"] = "GlobalMacros.CorelMate.ExportAsPrint",
+                ["dynamicCommand"] = "CorelMate.Workflows.ExportAsPrint",
                 ["dynamicCategory"] = MacroCategoryGuid,
                 ["userCaption"] = "Export As Print",
                 ["userToolTip"] = "Export print-ready CMYK PDF with text curved"
@@ -178,16 +173,14 @@ public static class CorelWorkspacePatcher
             }, CorelMateIcons.Color);
             EnsureItemData(itemsNode, CmdColorCmykGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["dynamicCommand"] = "GlobalMacros.CorelMate.ConvertToCmyk",
+                ["dynamicCommand"] = "CorelMate.Workflows.ConvertToCmyk",
                 ["dynamicCategory"] = MacroCategoryGuid,
                 ["userCaption"] = "Convert to CMYK",
                 ["userToolTip"] = "Convert all vector colors and bitmap images to CMYK"
             }, CorelMateIcons.ConvertCmyk);
             EnsureItemData(itemsNode, CmdColorRgbGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["dynamicCommand"] = "GlobalMacros.CorelMate.ConvertToRgb",
+                ["dynamicCommand"] = "CorelMate.Workflows.ConvertToRgb",
                 ["dynamicCategory"] = MacroCategoryGuid,
                 ["userCaption"] = "Convert to RGB",
                 ["userToolTip"] = "Convert all vector colors and bitmap images to RGB"
