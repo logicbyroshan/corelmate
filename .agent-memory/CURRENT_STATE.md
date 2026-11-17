@@ -24,4 +24,8 @@ Updated 2026-09-16 during bootstrap.
   - Version-adaptive UI with 5 authentic era design profiles (2017 Classic, 2019 Charcoal, 2021 Teal, 2023 Azure, 2026 Adaptive Pro).
   - Document & Object Inspector implemented and integrated into the WPF panel.
   - Multi-version installer and uninstaller supporting non-elevated user installations.
-  - Full test suite passing across layout, parsing, import, metrics, and version evaluation. Release package built and validated.
+  - Reverse-engineered reference extension `CdrPreflight Installer X7-2020` (extracted NSIS-3 installer, decompressed MS-OVBA VBA streams for `SanBonus`, `cp_Convert`, `ctc_boost`, `ctc_Convert_finde`).
+  - Implemented Page-to-Curves, All-Pages-to-Curves, and Selection-to-Curves feature with document copy preservation (`_curves.cdr`), atomic undo grouping, host performance optimization, and non-destructive group/powerclip recursion.
+  - Enhanced WPF Docker Curves tab with scope selector, preflight breakdown metrics, backup preservation toggle, and execution timing.
+  - Added native CorelDRAW menu commands and companion macro subs for page/all-pages/selection curve conversion.
+  - Full test suite passing across layout, parsing, import, metrics, version evaluation, and curve conversion models. Release package built and validated.

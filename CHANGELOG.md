@@ -33,9 +33,17 @@ Task 9 Modern UI Design System details are recorded in [.agents/CHANGELOG.md](.a
 - **Document & Object Inspector**:
   - Real-time document analysis: page count, page dimensions (mm), color model, shape counts breakdown (text, curves, bitmaps, rectangles, ellipses, groups).
   - Font analyzer: scans active artwork for all unique fonts and counts.
-- **UI Redesign**:
-  - High-DPI optimized, compact dashboard view with live connection pill, active document status, quick-action productivity tiles.
-  - Hardened Badge Generator and Convert Text to Curves workflows.
+- **Page-to-Curves & Multi-Scope Text Conversion**:
+  - Implemented full multi-scope text-to-curves conversion: `CurrentPage`, `AllPages`, and `SelectedObjects`.
+  - Non-destructive recursive traversal: preserves nested group structures and inspects PowerClip contents without ungrouping.
+  - Document safety mechanism: option to automatically save an uncorrupted backup copy (`_curves.cdr`) via `SaveAsCopy`/`File.Copy` prior to conversion.
+  - Performance optimization: wraps execution in atomic `BeginCommandGroup` with host optimization flags (`Optimization = True`, `EventsEnabled = False`, `PreserveSelection = False`) and screen redraw on finish.
+  - Preflight analysis metrics: detailed breakdown of found text (artistic vs paragraph vs text on path), groups, PowerClips, convertible vs locked/hidden shapes.
+  - Native menu commands in `UserDraw.xslt` and companion `CorelMate.gms` macro (`ConvertPageToCurves`, `ConvertAllPagesToCurves`, `ConvertSelectionToCurves`).
+  - Redesigned Curves UI tab in `CorelMatePanel.xaml` with scope radio selectors, backup preservation toggle, live metric tiles, and execution duration reporting.
+- **Reference Extension Reverse Engineering**:
+  - Decompiled and audited `CdrPreflight Installer X7-2020` (extracted NSIS installer, decompressed MS-OVBA streams for 11 modules).
+  - Evaluated architectural patterns and eliminated reference flaws (deprecated MSHTML docker, lack of backup copies, destructive layer unlocking, and silent error silencing).
 - **Installer & Packaging**:
   - Multi-version detection in `Install-CorelMate.ps1` and `Install-Dev.ps1`.
   - Non-elevated User AppData deployment for unprivileged environments.
