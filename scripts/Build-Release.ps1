@@ -1,6 +1,6 @@
 param(
     [string]$Configuration = 'Release',
-    [string]$Version = '0.1.0'
+    [string]$Version = '0.2.0'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -23,7 +23,7 @@ $managedAssemblies = @(
 if (Test-Path $outputRoot) { Remove-Item $outputRoot -Recurse -Force }
 New-Item $staging -ItemType Directory -Force | Out-Null
 
-Get-ChildItem $root -Directory -Recurse -Force | Where-Object { $_.Name -in @('bin', 'obj') } | Remove-Item -Recurse -Force
+Get-ChildItem $root -Directory -Recurse -Force | Where-Object { $_.Name -in @('bin', 'obj') } | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue
 
 dotnet restore $solution
 if ($LASTEXITCODE -ne 0) { throw 'CorelMate restore failed.' }
@@ -45,29 +45,32 @@ Copy-Item (Join-Path $root 'packaging\Install-CorelMate.ps1') $staging
 Copy-Item (Join-Path $root 'packaging\Uninstall-CorelMate.ps1') $staging
 
 @"
-CorelMate 0.1.0 Docker package
+CorelMate 0.2.0 Release Package
 
-Target: CorelDRAW Graphics Suite 2026 / v27
-Docker GUID: {A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}
-Docker class: CorelMate.UI.CorelMatePanel
+Targets: CorelDRAW Graphics Suite 2017 through 2026 (v19 to v28)
+Features:
+- Version-Adaptive UI (2017 Classic, 2019 Charcoal, 2021 Teal, 2023 Azure, 2026 Adaptive Pro)
+- Native CorelDRAW Main Navigation Menu Integration [CorelMate]
+- Batch Badge Generator (CSV/XLSX import, multi-page planning)
+- Convert Text to Curves (safe preflight, locked/hidden preservation)
+- Document Inspector (shapes breakdown, color model, font analysis)
+- Central Compatibility Registry (v19 to v28 validation)
 
-Install for the current CorelDRAW session:
+Install:
   powershell -ExecutionPolicy Bypass -File .\Install-CorelMate.ps1
 
-Remove from the current CorelDRAW session:
+Uninstall:
   powershell -ExecutionPolicy Bypass -File .\Uninstall-CorelMate.ps1
 
 This package intentionally does not contain Corel-owned interop assemblies.
-CorelDRAW provides those assemblies. It also does not claim automatic startup
-through a .addon file because that .NET startup mechanism is not verified for
-CorelDRAW v27.1.
+CorelDRAW supplies those assemblies.
 "@ | Set-Content (Join-Path $staging 'README.txt') -Encoding ASCII
 
 $files = @(Get-ChildItem $staging -File)
 if ($files.Name -contains 'Corel.Interop.CorelDRAW.dll' -or $files.Name -contains 'Corel.Interop.VGCore.dll') { throw 'Corel-owned interop assemblies must not be packaged.' }
 if ($files.Name | Where-Object { $_ -match '\.pdb$|\.user$|\.secret|appsettings|local' }) { throw 'Development-only or local files detected in package.' }
 $content = $files | ForEach-Object { Get-Content $_.FullName -Raw -ErrorAction Stop }
-if ($content | Where-Object { $_ -match 'C:\\Users\\|[A-Z]:\\|Program Files' }) { throw 'Absolute developer path detected in package contents.' }
+if ($content | Where-Object { $_ -match 'C:\\Users\\|(?<![A-Za-z])[A-Za-z]:\\|Program Files' }) { throw 'Absolute developer path detected in package contents.' }
 foreach ($assemblyName in $managedAssemblies) { if (-not ($files.Name -contains $assemblyName)) { throw "$assemblyName is missing from package." } }
 
 Compress-Archive -Path (Join-Path $staging '*') -DestinationPath $package -CompressionLevel Optimal

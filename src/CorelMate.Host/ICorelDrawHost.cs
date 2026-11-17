@@ -15,6 +15,10 @@ public interface ICorelDrawHost
     CorelPage? ActivePage { get; }
     CorelLayer? ActiveLayer { get; }
     CorelShapeRange? ActiveSelection { get; }
+
+    string HostVersionString { get; }
+    int HostMajorVersion { get; }
+    string? ActiveDocumentSummary { get; }
 }
 
 public sealed class CorelDrawHost : ICorelDrawHost
@@ -47,4 +51,38 @@ public sealed class CorelDrawHost : ICorelDrawHost
     public CorelPage? ActivePage => Application.ActivePage;
     public CorelLayer? ActiveLayer => Application.ActiveLayer;
     public CorelShapeRange? ActiveSelection => Application.ActiveSelectionRange;
+
+    public string HostVersionString
+    {
+        get
+        {
+            try { return Application.Version; }
+            catch { return string.Empty; }
+        }
+    }
+
+    public int HostMajorVersion
+    {
+        get
+        {
+            var ver = CorelVersionDetector.ExtractMajorVersion(HostVersionString);
+            return ver > 0 ? ver : 27;
+        }
+    }
+
+    public string? ActiveDocumentSummary
+    {
+        get
+        {
+            try
+            {
+                var doc = ActiveDocument;
+                return doc != null ? $"{doc.Name} ({doc.Pages.Count} page(s))" : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+    }
 }

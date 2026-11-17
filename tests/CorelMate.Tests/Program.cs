@@ -4,16 +4,21 @@ using System.IO;
 using System.IO.Compression;
 using System.Text;
 using CorelMate.Badges;
+using CorelMate.Core;
 using CorelMate.Curves;
+using CorelMate.Infrastructure;
 
+// 1. Badge Grid calculation
 var grid = BadgeGrid.ForQuantity(5, 2);
 if (grid.Rows != 3 || grid.Capacity != 6) throw new InvalidOperationException("Badge grid calculation failed.");
 
+// 2. Placeholder parser & replacement
 var placeholders = PlaceholderParser.Parse("{{title}} - {{STANDARD}} - {{TITLE}}");
 if (placeholders.Count != 3 || placeholders[0].Name != "TITLE") throw new InvalidOperationException("Placeholder parsing failed.");
 var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) { ["TITLE"] = "MONITOR", ["STANDARD"] = "NURSERY" };
 if (PlaceholderParser.Replace("{{TITLE}} / {{STANDARD}}", values) != "MONITOR / NURSERY") throw new InvalidOperationException("Placeholder replacement failed.");
 
+// 3. Badge Layout Engine planning
 var settings = new BadgeLayoutSettings
 {
 	PageWidthMillimeters = 210,
@@ -36,13 +41,71 @@ if (multiPage.Pages.Count != 2 || multiPage.Pages[1].Positions.Count != 1) throw
 try { PlaceholderParser.Parse("{{student name}}"); throw new InvalidOperationException("Invalid placeholder was accepted."); } catch (FormatException) { }
 try { new BadgeDataRow(values, -1); throw new InvalidOperationException("Negative quantity was accepted."); } catch (ArgumentOutOfRangeException) { }
 
+// 4. Text to Curves preflight model
 var curveSummary = new CurveConversionSummary { FoundTextObjects = 5, ConvertibleTextObjects = 3, LockedTextObjects = 1, HiddenTextObjects = 1 };
 if (curveSummary.SkippedTextObjects != 2) throw new InvalidOperationException("Curve conversion summary failed.");
 
-var tempRoot = Path.Combine(Path.GetTempPath(), "CorelMate-import-tests");
+// 5. Version Compatibility Registry & Version Extraction Tests
+if (CorelCompatibilityRegistry.ExtractMajorVersion("Version 27.1.0.129") != 27) throw new InvalidOperationException("Version extraction failed for v27.1.");
+if (CorelCompatibilityRegistry.ExtractMajorVersion("CorelDRAW Graphics Suite 2024 v26.0") != 26) throw new InvalidOperationException("Version extraction failed for v26.");
+if (CorelCompatibilityRegistry.ExtractMajorVersion("19.1.0.448") != 19) throw new InvalidOperationException("Version extraction failed for v19.");
+if (CorelCompatibilityRegistry.ExtractMajorVersion("unknown") != 0) throw new InvalidOperationException("Version extraction should return 0 for unknown string.");
+
+// Evaluate 2017 (v19) through 2026 (v27/v28)
+for (var ver = 19; ver <= 28; ver++)
+{
+	var eval = CorelCompatibilityRegistry.Evaluate(ver);
+	if (!eval.CanRun || eval.Status != CompatibilityStatus.Supported) throw new InvalidOperationException($"Supported version v{ver} was rejected.");
+}
+
+// Evaluate legacy (< 19)
+var legacy = CorelCompatibilityRegistry.Evaluate(18);
+if (legacy.CanRun || legacy.Status != CompatibilityStatus.UnsupportedLegacy) throw new InvalidOperationException("Legacy version v18 was unexpectedly supported.");
+
+// Evaluate future (> 28)
+var future = CorelCompatibilityRegistry.Evaluate(29);
+if (future.CanRun || future.Status != CompatibilityStatus.UnsupportedFuture) throw new InvalidOperationException("Future version v29 was unexpectedly supported without compatibility update.");
+
+// Era resolution
+if (CorelCompatibilityRegistry.GetEraForVersion(19) != CorelEra.Classic2017) throw new InvalidOperationException("v19 era resolution failed.");
+if (CorelCompatibilityRegistry.GetEraForVersion(21) != CorelEra.Charcoal2019) throw new InvalidOperationException("v21 era resolution failed.");
+if (CorelCompatibilityRegistry.GetEraForVersion(23) != CorelEra.Teal2021) throw new InvalidOperationException("v23 era resolution failed.");
+if (CorelCompatibilityRegistry.GetEraForVersion(25) != CorelEra.Azure2023) throw new InvalidOperationException("v25 era resolution failed.");
+if (CorelCompatibilityRegistry.GetEraForVersion(27) != CorelEra.AdaptivePro2026) throw new InvalidOperationException("v27 era resolution failed.");
+
+// 6. Document Metrics model tests
+var metrics = new DocumentMetrics(
+	"TestDoc.cdr",
+	@"C:\Docs\TestDoc.cdr",
+	3,
+	210.0,
+	297.0,
+	"CMYK",
+	45,
+	12,
+	20,
+	5,
+	3,
+	5,
+	2,
+	4,
+	new[] { "Arial", "Impact", "Segoe UI" });
+if (metrics.TotalShapes != 45 || metrics.UniqueFonts.Count != 3 || !metrics.DimensionsString.Contains("210")) throw new InvalidOperationException("Document metrics failed.");
+
+// 7. Logger tests
+var tempRoot = Path.Combine(Path.GetTempPath(), "CorelMate-tests-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(tempRoot);
 try
 {
+	var logFile = Path.Combine(tempRoot, "test.log");
+	var logger = new FileCorelMateLogger(logFile);
+	logger.Info("Test info message");
+	logger.Error("Test error message", new InvalidOperationException("Sample failure"));
+	if (!File.Exists(logFile)) throw new InvalidOperationException("Log file was not created.");
+	var logText = File.ReadAllText(logFile);
+	if (!logText.Contains("Test info message") || !logText.Contains("Sample failure")) throw new InvalidOperationException("Log contents verification failed.");
+
+	// 8. CSV & XLSX Import Tests
 	var csvPath = Path.Combine(tempRoot, "badges.csv");
 	File.WriteAllText(csvPath, "TITLE,STANDARD,QUANTITY,EXTRA\r\n\"Senior, Monitor\",\"वरिष्ठ मॉनिटर\",2,ignored\r\n\"Monitor\",Monitor,8,ignored\r\n\r\n\"Say \"\"Hi\"\"\",Test,1,ignored\r\n", new UTF8Encoding(false));
 	var csv = CsvImportSource.Read(csvPath);
@@ -69,7 +132,8 @@ finally
 {
 	if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true);
 }
-Console.WriteLine("CorelMate.Tests passed.");
+
+Console.WriteLine("All CorelMate.Tests passed successfully.");
 
 static void CreateSyntheticXlsx(string path)
 {
