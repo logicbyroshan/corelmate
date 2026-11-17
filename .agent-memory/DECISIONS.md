@@ -67,6 +67,7 @@ Decision: Complement Addon XSLT deployment with direct in-place XML patching of 
 Context: While Addon XSLT works on system-wide addon installs, CorelDRAW v27 defaults `AddDocker` captions to the C# UserControl class name (`CorelMate.UI.CorelMatePanel`) in the active workspace and only scans user AppData addons if registered in `<Addons>`. Closing the docker also hid it without an obvious UI entry point if the navbar had not yet updated.
 
 Reason: Directly patching `_default.cdws` in user AppData:
+
 1. Immediately fixes the docker title bar and right-side tab strip to display `CorelMate` instead of the C# class name.
 2. Injects the `CorelMate` top-level navbar menu item directly next to `Help`.
 3. Injects `CorelMate Docker` toggle commands into both `CorelMate` and `Window` menus using CorelDRAW's native `*Docker('{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}')` binding, providing instant toggle, live checkmarks, and closed-docker reopening without any VBA dependency.

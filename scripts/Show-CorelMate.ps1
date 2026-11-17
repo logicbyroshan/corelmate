@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$Configuration = 'Release'
 )
 
@@ -24,3 +24,4 @@ try {
 catch {
     Write-Error "Failed to show CorelMate Docker: $_"
 }
+

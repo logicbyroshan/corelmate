@@ -130,6 +130,13 @@ public sealed partial class CorelMatePanel : UserControl
     private void DashGoInspector_Click(object sender, RoutedEventArgs e) { TabInspectorRadio.IsChecked = true; }
     private void DashGoCompat_Click(object sender, RoutedEventArgs e) { TabCompatRadio.IsChecked = true; }
 
+    private void DashConvertPage_Click(object sender, RoutedEventArgs e)
+    {
+        TabCurvesRadio.IsChecked = true;
+        if (ScopeCurrentPageRadio != null) ScopeCurrentPageRadio.IsChecked = true;
+        ConvertCurvesButton_Click(sender, e);
+    }
+
     #region Document Inspector Feature
 
     private void RefreshInspectorButton_Click(object sender, RoutedEventArgs e)

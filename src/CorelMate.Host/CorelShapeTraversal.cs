@@ -28,8 +28,23 @@ public sealed class CorelShapeNode
     public CorelShape Shape { get; }
     public bool HiddenByAncestor { get; }
     public bool LockedByAncestor { get; }
-    public bool IsHidden => HiddenByAncestor || !Shape.Visible;
-    public bool IsLocked => LockedByAncestor || Shape.Locked;
+    public bool IsHidden
+    {
+        get
+        {
+            if (HiddenByAncestor) return true;
+            try { return !Shape.Visible; } catch { return false; }
+        }
+    }
+
+    public bool IsLocked
+    {
+        get
+        {
+            if (LockedByAncestor) return true;
+            try { return Shape.Locked; } catch { return false; }
+        }
+    }
 }
 
 public static class CorelShapeTraversal
@@ -51,19 +66,52 @@ public static class CorelShapeTraversal
         var nodes = new List<CorelShapeNode>();
         if (page == null) return nodes;
 
-        for (var layerIndex = 1; layerIndex <= page.Layers.Count; layerIndex++)
+        var visited = new HashSet<int>();
+
+        // 1. Traverse all regular layers on the page
+        try
         {
-            var layer = page.Layers[layerIndex];
-            if (layer.IsSpecialLayer) continue;
-
-            var layerHidden = !layer.Visible;
-            var layerLocked = !layer.Editable;
-
-            for (var shapeIndex = 1; shapeIndex <= layer.Shapes.Count; shapeIndex++)
+            for (var layerIndex = 1; layerIndex <= page.Layers.Count; layerIndex++)
             {
-                AddShape(layer.Shapes[shapeIndex], layerHidden, layerLocked, nodes, metrics);
+                var layer = page.Layers[layerIndex];
+                if (layer.IsSpecialLayer) continue;
+
+                var layerHidden = !layer.Visible;
+                var layerLocked = !layer.Editable;
+
+                for (var shapeIndex = 1; shapeIndex <= layer.Shapes.Count; shapeIndex++)
+                {
+                    var s = layer.Shapes[shapeIndex];
+                    if (s != null && visited.Add(s.StaticID))
+                    {
+                        AddShape(s, layerHidden, layerLocked, nodes, metrics);
+                    }
+                }
             }
         }
+        catch
+        {
+        }
+
+        // 2. Comprehensive fallback: ensure all shapes on page.Shapes are visited
+        try
+        {
+            for (var shapeIndex = 1; shapeIndex <= page.Shapes.Count; shapeIndex++)
+            {
+                var s = page.Shapes[shapeIndex];
+                if (s != null && visited.Add(s.StaticID))
+                {
+                    var layer = s.Layer;
+                    var hidden = layer != null && (!layer.Visible || layer.IsSpecialLayer);
+                    var locked = layer != null && !layer.Editable;
+                    AddShape(s, hidden, locked, nodes, metrics);
+                }
+            }
+        }
+        catch
+        {
+        }
+
         return nodes;
     }
 
@@ -85,8 +133,11 @@ public static class CorelShapeTraversal
     {
         if (shape == null) return;
 
-        var hidden = hiddenByAncestor || !shape.Visible;
-        var locked = lockedByAncestor || shape.Locked;
+        var hidden = hiddenByAncestor;
+        try { if (!shape.Visible) hidden = true; } catch { }
+
+        var locked = lockedByAncestor;
+        try { if (shape.Locked) locked = true; } catch { }
 
         nodes.Add(new CorelShapeNode(shape, hiddenByAncestor, lockedByAncestor));
 

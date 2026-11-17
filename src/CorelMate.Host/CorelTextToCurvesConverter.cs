@@ -91,7 +91,11 @@ public sealed class CorelTextToCurvesConverter
 
         foreach (var node in nodes)
         {
-            if (node.Shape.Type != cdrShapeType.cdrTextShape) continue;
+            cdrShapeType shapeType;
+            try { shapeType = node.Shape.Type; }
+            catch { continue; }
+
+            if (shapeType != cdrShapeType.cdrTextShape) continue;
             summary.FoundTextObjects++;
 
             if (node.IsLocked) summary.LockedTextObjects++;
@@ -181,7 +185,26 @@ public sealed class CorelTextToCurvesConverter
                 }
                 catch
                 {
-                    failed++;
+                    // Fallback for nested shapes inside PowerClip containers
+                    try
+                    {
+                        var parent = shape.PowerClipParent;
+                        if (parent?.PowerClip != null)
+                        {
+                            parent.PowerClip.EnterEditMode();
+                            shape.ConvertToCurves();
+                            parent.PowerClip.LeaveEditMode();
+                            converted++;
+                        }
+                        else
+                        {
+                            failed++;
+                        }
+                    }
+                    catch
+                    {
+                        failed++;
+                    }
                 }
             }
         }

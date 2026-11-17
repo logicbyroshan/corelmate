@@ -146,39 +146,46 @@ if (Test-Path $corelUserDir) {
                     noBmpOnMenu = "true"
                 }
                 Set-PkgItemData $itemsNode "a63f9c4c-item-page-9ac9-3a15c783d5d1" @{
-                    type = "button"
-                    userCaption = "Convert Page to Curves"
-                    userToolTip = "Convert all text objects on current page to curves"
+                    type = "checkButton"
+                    check = "*Docker('$dockerGuid')"
+                    userCaption = "Convert Page to Curves (Docker)"
+                    userToolTip = "Open CorelMate Curves Docker to convert active page text to curves"
                     noBmpOnMenu = "true"
                 }
                 Set-PkgItemData $itemsNode "a63f9c4c-item-pall-9ac9-3a15c783d5d2" @{
                     type = "button"
-                    userCaption = "Convert All Pages to Curves"
-                    userToolTip = "Convert all text objects across all pages to curves"
+                    dynamicCommand = "ConvertAllToCurves.Converter.ConvertAllToCurves"
+                    dynamicCategory = "2cc24a3e-fe24-4708-9a74-9c75406eebcd"
+                    userCaption = "Convert All to Curves (Macro)"
+                    userToolTip = "Execute CorelDRAW Convert All to Curves macro"
                     noBmpOnMenu = "true"
                 }
                 Set-PkgItemData $itemsNode "a63f9c4c-item-psel-9ac9-3a15c783d5d3" @{
-                    type = "button"
-                    userCaption = "Convert Selection to Curves"
-                    userToolTip = "Convert selected text objects to curves"
+                    type = "checkButton"
+                    check = "*Docker('$dockerGuid')"
+                    userCaption = "Convert Selection to Curves (Docker)"
+                    userToolTip = "Open CorelMate Curves Docker for selected text objects"
                     noBmpOnMenu = "true"
                 }
                 Set-PkgItemData $itemsNode "a63f9c4c-item-inspect-9ac9-3a15c783d5d5" @{
-                    type = "button"
-                    userCaption = "Document Inspector"
-                    userToolTip = "Inspect document metrics and objects"
+                    type = "checkButton"
+                    check = "*Docker('$dockerGuid')"
+                    userCaption = "Document Inspector (Docker)"
+                    userToolTip = "Open CorelMate Document & Object Inspector"
                     noBmpOnMenu = "true"
                 }
                 Set-PkgItemData $itemsNode "a63f9c4c-item-badge-9ac9-3a15c783d5d6" @{
-                    type = "button"
-                    userCaption = "Badge Generator"
-                    userToolTip = "Open Badge Generator"
+                    type = "checkButton"
+                    check = "*Docker('$dockerGuid')"
+                    userCaption = "Badge Generator (Docker)"
+                    userToolTip = "Open CorelMate Batch Badge Generator"
                     noBmpOnMenu = "true"
                 }
                 Set-PkgItemData $itemsNode "a63f9c4c-item-about-9ac9-3a15c783d5d7" @{
-                    type = "button"
+                    type = "checkButton"
+                    check = "*Docker('$dockerGuid')"
                     userCaption = "About CorelMate"
-                    userToolTip = "About CorelMate"
+                    userToolTip = "About CorelMate Suite"
                     noBmpOnMenu = "true"
                 }
 

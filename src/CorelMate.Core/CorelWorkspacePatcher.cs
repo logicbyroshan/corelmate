@@ -108,49 +108,56 @@ public static class CorelWorkspacePatcher
 
             EnsureItemData(itemsNode, ItemConvertPageCurvesGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["userCaption"] = "Convert Page to Curves",
-                ["userToolTip"] = "Convert all text objects on the current page to curves",
+                ["type"] = "checkButton",
+                ["check"] = $"*Docker('{DockerGuid}')",
+                ["userCaption"] = "Convert Page to Curves (Docker)",
+                ["userToolTip"] = "Open CorelMate Curves Docker to convert active page text to curves",
                 ["noBmpOnMenu"] = "true"
             });
 
             EnsureItemData(itemsNode, ItemConvertAllCurvesGuid, new Dictionary<string, string>
             {
                 ["type"] = "button",
-                ["userCaption"] = "Convert All Pages to Curves",
-                ["userToolTip"] = "Convert all text objects across all pages to curves",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ConvertAllToCurves",
+                ["dynamicCategory"] = "2cc24a3e-fe24-4708-9a74-9c75406eebcd",
+                ["userCaption"] = "Convert All to Curves (Macro)",
+                ["userToolTip"] = "Execute CorelDRAW Convert All to Curves macro",
                 ["noBmpOnMenu"] = "true"
             });
 
             EnsureItemData(itemsNode, ItemConvertSelCurvesGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["userCaption"] = "Convert Selection to Curves",
-                ["userToolTip"] = "Convert selected text objects to curves",
+                ["type"] = "checkButton",
+                ["check"] = $"*Docker('{DockerGuid}')",
+                ["userCaption"] = "Convert Selection to Curves (Docker)",
+                ["userToolTip"] = "Open CorelMate Curves Docker for selected text objects",
                 ["noBmpOnMenu"] = "true"
             });
 
             EnsureItemData(itemsNode, ItemInspectorGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["userCaption"] = "Document Inspector",
-                ["userToolTip"] = "Inspect document metrics and objects",
+                ["type"] = "checkButton",
+                ["check"] = $"*Docker('{DockerGuid}')",
+                ["userCaption"] = "Document Inspector (Docker)",
+                ["userToolTip"] = "Open CorelMate Document & Object Inspector",
                 ["noBmpOnMenu"] = "true"
             });
 
             EnsureItemData(itemsNode, ItemBadgesGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
-                ["userCaption"] = "Badge Generator",
-                ["userToolTip"] = "Open Badge Generator",
+                ["type"] = "checkButton",
+                ["check"] = $"*Docker('{DockerGuid}')",
+                ["userCaption"] = "Badge Generator (Docker)",
+                ["userToolTip"] = "Open CorelMate Batch Badge Generator",
                 ["noBmpOnMenu"] = "true"
             });
 
             EnsureItemData(itemsNode, ItemAboutGuid, new Dictionary<string, string>
             {
-                ["type"] = "button",
+                ["type"] = "checkButton",
+                ["check"] = $"*Docker('{DockerGuid}')",
                 ["userCaption"] = "About CorelMate",
-                ["userToolTip"] = "About CorelMate",
+                ["userToolTip"] = "About CorelMate Suite",
                 ["noBmpOnMenu"] = "true"
             });
         }
