@@ -61,3 +61,8 @@ Updated 2026-09-16 during bootstrap.
     - Removed conflicting `type="button"` attributes from `itemData` elements, aligning with CorelDRAW dynamic category macro items.
     - Updated `Install-Dev.ps1`, `Install-CorelMate.ps1`, and `CorelMenuIntegration.cs` to deploy the binary `assets/gms/CorelMate.gms` directly into user AppData `Draw\GMS` without corrupting OLE headers.
     - Tested and verified in fresh CorelDRAW session; commands now trigger immediate execution with native confirmation dialogs.
+  - Macro Command Dispatch & Qualified XML Bitmap Datatypes Hardening:
+    - Fixed root cause of unresponsive menu clicks: `EnsureItemData` now explicitly removes `type="button"` from existing workspace archives (`_default.cdws`), preventing CorelDRAW from intercepting clicks with missing C++ handlers.
+    - Fixed icon datatype serialization: `SetAttribute("dt", "urn:schemas-microsoft-com:datatypes", "bin.base64")` guarantees authentic `dt:dt="bin.base64"` qualified XML output, allowing CorelDRAW's MSXML parser to properly load `userSmallBitmap`.
+    - Eliminated orphan headless `CorelDRW.exe` background processes by replacing `[Activator]::CreateInstance` with `[System.Runtime.InteropServices.Marshal]::GetActiveObject`.
+    - Deployed `CorelMate.gms` to both user AppData `Draw\GMS\` and `Draw\Addons\CorelMate\`. Tests verified clean with 0 warnings/errors.

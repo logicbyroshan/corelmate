@@ -102,21 +102,22 @@ if (Test-Path $srcGlobalMacros) {
 
 # Live VBA import if CorelDRAW is running
 try {
-    $type = [Type]::GetTypeFromProgID("CorelDRAW.Application")
-    $app = [Activator]::CreateInstance($type)
-    $app.InitializeVBA()
-    $basFile = Join-Path $root "assets\vba\CorelMate.bas"
-    if (Test-Path $basFile) {
-        foreach ($vp in $app.VBE.VBProjects) {
-            if ($vp.Name -eq "GlobalMacros" -or $vp.Name -eq "CorelMate") {
-                foreach ($c in $vp.VBComponents) {
-                    if ($c.Name -eq "CorelMate" -or $c.Name -eq "Workflows") {
-                        $vp.VBComponents.Remove($c)
-                        break
+    $app = [System.Runtime.InteropServices.Marshal]::GetActiveObject("CorelDRAW.Application")
+    if ($app) {
+        $app.InitializeVBA()
+        $basFile = Join-Path $root "assets\vba\CorelMate.bas"
+        if (Test-Path $basFile) {
+            foreach ($vp in $app.VBE.VBProjects) {
+                if ($vp.Name -eq "GlobalMacros" -or $vp.Name -eq "CorelMate") {
+                    foreach ($c in $vp.VBComponents) {
+                        if ($c.Name -eq "CorelMate" -or $c.Name -eq "Workflows") {
+                            $vp.VBComponents.Remove($c)
+                            break
+                        }
                     }
+                    $vp.VBComponents.Import($basFile) | Out-Null
+                    Write-Host "  [OK] Live CorelMate VBA module imported into active $($vp.Name) project" -ForegroundColor Green
                 }
-                $vp.VBComponents.Import($basFile) | Out-Null
-                Write-Host "  [OK] Live CorelMate VBA module imported into active $($vp.Name) project" -ForegroundColor Green
             }
         }
     }
@@ -142,6 +143,9 @@ foreach ($dRoot in $userAddonRoots) {
         if (-not (Test-Path $uAddon)) { New-Item -ItemType Directory -Path $uAddon -Force | Out-Null }
         [System.IO.File]::WriteAllBytes((Join-Path $uAddon "Coreldrw.addon"), @())
         [System.IO.File]::WriteAllText((Join-Path $uAddon "UserDraw.xslt"), $xsltContent, [System.Text.Encoding]::UTF8)
+        if (Test-Path $srcCorelMateGms) {
+            Copy-Item -Path $srcCorelMateGms -Destination (Join-Path $uAddon "CorelMate.gms") -Force
+        }
         Write-Host "  [OK] CorelMate Addon deployed to User AppData: $uAddon" -ForegroundColor Green
     } catch {}
 }
