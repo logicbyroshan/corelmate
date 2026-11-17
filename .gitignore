@@ -20,3 +20,5 @@ logs/
 CorelMate.local.json
 artifacts/
 CdrPreflight*/
+__pycache__/
+*.pyc

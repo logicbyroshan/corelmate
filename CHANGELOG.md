@@ -16,6 +16,24 @@ Project branding and open-source documentation details are recorded in [.agents/
  
 Task 9 Modern UI Design System details are recorded in [.agents/CHANGELOG.md](.agents/CHANGELOG.md).
 
+## CorelMate 1.18.1 (Update 4) - Direct Navbar Tools (Curves, Export, Color) with Zero Docker
+
+- **Zero Docker Mode**: Removed Docker panel requirements completely. No Docker window is opened, docked, or shown. Operations execute directly within native CorelDRAW UI with standard native message dialogs.
+- **Direct Top Navbar Menus**: Registered three distinct flyout menus directly in the top menu bar (Welcome Screen & Document Open modes):
+  - **CorelMate Curves**:
+    - `Curve Current Page`: Recursively converts all text shapes (including groups and PowerClips) on current page to curves.
+    - `Curve All Pages`: Recursively converts all text across all pages in the active document to curves.
+    - `Curve Selected Objects`: Converts only selected text shapes to curves.
+  - **CorelMate Export**:
+    - `Export As ID Card`: Directly exports text field metadata (name, text, font, size, coordinates, dimensions, color) to a `.json` file and publishes an editable vector `.pdf` template.
+    - `Export As Print`: Publishes a print-ready CMYK PDF with text converted to curves and lossless bitmap quality.
+  - **CorelMate Color**:
+    - `Convert to CMYK`: Recursively converts all vector fills (uniform & fountain), outlines, and bitmap images (`cdrCMYKColorImage`) to CMYK.
+    - `Convert to RGB`: Recursively converts all vector fills, outlines, and bitmap images (`cdrRGBColorImage`) to RGB.
+- **Mandatory User Confirmation**: Every action prompts the user with an explicit confirmation dialog before executing.
+- **Native MS-OVBA Binary GMS Companion**: Implemented a standalone MS-OVBA LZ77 compressor and OLE FAT sector allocator in `scripts/Build-Gms.py`, generating fully compliant binary `.gms` macros deployed to CorelDRAW's `Draw\GMS\` directory.
+- **Unified Workspace & Addon Patcher**: Streamlined `CorelWorkspacePatcher.cs`, `scripts/Install-Dev.ps1`, and `packaging/Install-CorelMate.ps1` to automatically configure `_default.cdws` and deploy `UserDraw.xslt` without manual intervention.
+
 ## CorelMate 1.18.1 (Update 3) - Adaptive Light/Dark Theme, Live Connection & Streamlined UI
 
 - **Connection Reliability (Fixed "Offline" Issue)**: Resolved root cause where `Marshal.GetActiveObject` threw `MK_E_UNAVAILABLE` because CorelDRAW does not register in the Windows Running Object Table (ROT). Implemented single-instance COM activation via `Type.GetTypeFromProgID("CorelDRAW.Application")` and `Activator.CreateInstance()`, backed by deferred retry timers and on-demand reconnection. Docker now connects immediately, showing `Connected` and live document information.

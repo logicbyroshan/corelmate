@@ -17,16 +17,38 @@ public static class CorelWorkspacePatcher
     public const string CorelMateMenuFlyoutGuid = "a63f9c4c-4e91-menu-9ac9-3a15c783d5d7";
     public const string CorelMateCommandBarGuid = "a63f9c4c-cbef-4276-b686-adb4f77c80d6";
 
-    // Item GUIDs for menu commands & dockers
+    // Legacy Item GUIDs (retained for binary/library compatibility)
     public const string ItemShowDockerGuid        = "a63f9c4c-item-dock-9ac9-3a15c783d5d4";
-    public const string ItemConvertPageCurvesGuid = "a63f9c4c-item-page-9ac9-3a15c783d5d1";
-    public const string ItemConvertAllCurvesGuid  = "a63f9c4c-item-pall-9ac9-3a15c783d5d2";
-    public const string ItemConvertSelCurvesGuid  = "a63f9c4c-item-psel-9ac9-3a15c783d5d3";
+    public const string ItemConvertPageCurvesGuid = "a63f9c4c-cmd-cpage-3a15c783d5d1";
+    public const string ItemConvertAllCurvesGuid  = "a63f9c4c-cmd-callp-3a15c783d5d2";
+    public const string ItemConvertSelCurvesGuid  = "a63f9c4c-cmd-csele-3a15c783d5d3";
     public const string ItemInspectorGuid         = "a63f9c4c-item-inspect-9ac9-3a15c783d5d5";
     public const string ItemBadgesGuid            = "a63f9c4c-item-badge-9ac9-3a15c783d5d6";
     public const string ItemAboutGuid             = "a63f9c4c-item-about-9ac9-3a15c783d5d7";
 
-    // Standard CorelDRAW Menubar & DockHost GUIDs
+    // Feature 1: Curves
+    public const string FlyoutCurvesGuid        = "a63f9c4c-flyout-curves-3a15c783d5d1";
+    public const string CBarCurvesGuid          = "a63f9c4c-cbar-curves-3a15c783d5d1";
+    public const string CmdCurveCurrentPageGuid = "a63f9c4c-cmd-cpage-3a15c783d5d1";
+    public const string CmdCurveAllPagesGuid    = "a63f9c4c-cmd-callp-3a15c783d5d2";
+    public const string CmdCurveSelectionGuid   = "a63f9c4c-cmd-csele-3a15c783d5d3";
+
+    // Feature 2: Export
+    public const string FlyoutExportGuid        = "a63f9c4c-flyout-export-3a15c783d5d2";
+    public const string CBarExportGuid          = "a63f9c4c-cbar-export-3a15c783d5d2";
+    public const string CmdExportIdCardGuid     = "a63f9c4c-cmd-eidcd-3a15c783d5d4";
+    public const string CmdExportPrintGuid      = "a63f9c4c-cmd-eprnt-3a15c783d5d5";
+
+    // Feature 3: Color
+    public const string FlyoutColorGuid         = "a63f9c4c-flyout-color-3a15c783d5d3";
+    public const string CBarColorGuid           = "a63f9c4c-cbar-color-3a15c783d5d3";
+    public const string CmdColorCmykGuid        = "a63f9c4c-cmd-ccmyk-3a15c783d5d6";
+    public const string CmdColorRgbGuid         = "a63f9c4c-cmd-crgbb-3a15c783d5d7";
+
+    // Macro Category GUID in CorelDRAW
+    public const string MacroCategoryGuid = "2cc24a3e-fe24-4708-9a74-9c75406eebcd";
+
+    // CorelDRAW Workspace Menubar & DockHost GUIDs
     public const string ModeWelcomeGuid = "6d1d9e94-13f3-4517-a976-ba9154671db4";
     public const string ModeDocOpenGuid = "76d73481-9076-44c9-821c-52de9408cce2";
     public const string WindowMenuModeGuid = "6c91d5ab-d648-4364-96fb-3e71bcfaf70d";
@@ -37,41 +59,17 @@ public static class CorelWorkspacePatcher
     {
         if (xml == null) throw new ArgumentNullException(nameof(xml));
 
-        // 1. Update or create <dockers>/<dockerData>
-        var dockerNode = xml.SelectSingleNode($"//dockers/dockerData[@guid='{DockerGuid}']") as XmlElement;
-        if (dockerNode != null)
-        {
-            dockerNode.SetAttribute("userCaption", "CorelMate");
-            dockerNode.SetAttribute("caption", "CorelMate");
-            dockerNode.SetAttribute("focusStyle", "noThrow");
-        }
-        else
-        {
-            var dockersNode = xml.SelectSingleNode("//dockers") as XmlElement;
-            if (dockersNode == null)
-            {
-                dockersNode = xml.CreateElement("dockers");
-                xml.DocumentElement?.AppendChild(dockersNode);
-            }
-            if (dockersNode != null)
-            {
-                var d = xml.CreateElement("dockerData");
-                d.SetAttribute("guid", DockerGuid);
-                d.SetAttribute("userCaption", "CorelMate");
-                d.SetAttribute("caption", "CorelMate");
-                d.SetAttribute("dock", "fill");
-                d.SetAttribute("focusStyle", "noThrow");
-                var c = xml.CreateElement("container");
-                var it = xml.CreateElement("item");
-                it.SetAttribute("dock", "fill");
-                it.SetAttribute("guidRef", DockerHostedItemGuid);
-                c.AppendChild(it);
-                d.AppendChild(c);
-                dockersNode.AppendChild(d);
-            }
-        }
+        // 1. Explicitly REMOVE any Docker registration (No Docker required)
+        var dockerNode = xml.SelectSingleNode($"//dockers/dockerData[@guid='{DockerGuid}']");
+        dockerNode?.ParentNode?.RemoveChild(dockerNode);
 
-        // 2. Ensure <items>
+        var trayDocker = xml.SelectSingleNode($"//viewHost[@guid='{RightDockTrayGuid}']/dockerData[@guidRef='{DockerGuid}']");
+        trayDocker?.ParentNode?.RemoveChild(trayDocker);
+
+        var winDockerItem = xml.SelectSingleNode($"//modeData[@guid='{WindowMenuModeGuid}']/item[@guidRef='{ItemShowDockerGuid}']");
+        winDockerItem?.ParentNode?.RemoveChild(winDockerItem);
+
+        // 2. Ensure <items> exists
         var itemsNode = xml.SelectSingleNode("//items") as XmlElement;
         if (itemsNode == null)
         {
@@ -81,21 +79,121 @@ public static class CorelWorkspacePatcher
 
         if (itemsNode != null)
         {
-            EnsureItemData(itemsNode, DockerHostedItemGuid, new Dictionary<string, string>
+            // Remove all legacy docker and obsolete menu items
+            string[] legacyItemGuids = {
+                DockerHostedItemGuid,
+                ItemShowDockerGuid,
+                CorelMateMenuFlyoutGuid,
+                "a63f9c4c-item-page-9ac9-3a15c783d5d1",
+                "a63f9c4c-item-pall-9ac9-3a15c783d5d2",
+                "a63f9c4c-item-psel-9ac9-3a15c783d5d3",
+                "a63f9c4c-item-inspect-9ac9-3a15c783d5d5",
+                "a63f9c4c-item-badge-9ac9-3a15c783d5d6",
+                "a63f9c4c-item-about-9ac9-3a15c783d5d7"
+            };
+            foreach (var legId in legacyItemGuids)
             {
-                ["type"] = "wpfhost",
-                ["hostedType"] = $"{uiAssemblyPath},{DockerClassName}"
-            });
+                var oldNode = itemsNode.SelectSingleNode($"itemData[@guid='{legId}']");
+                oldNode?.ParentNode?.RemoveChild(oldNode);
+            }
 
-            EnsureItemData(itemsNode, ItemShowDockerGuid, new Dictionary<string, string>
+            // --- FEATURE 1: CURVES ---
+            EnsureItemData(itemsNode, FlyoutCurvesGuid, new Dictionary<string, string>
             {
-                ["type"] = "checkButton",
-                ["check"] = $"*Docker('{DockerGuid}')",
-                ["userCaption"] = "CorelMate Docker",
-                ["userToolTip"] = "Open or Toggle CorelMate Docker",
+                ["type"] = "flyout",
+                ["flyoutBarRef"] = CBarCurvesGuid,
+                ["userCaption"] = "CorelMate Curves",
+                ["userToolTip"] = "Text-to-Curves Operations",
+                ["userCreated"] = "true",
+                ["noBmpOnMenu"] = "true"
+            });
+            EnsureItemData(itemsNode, CmdCurveCurrentPageGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.CurveCurrentPage",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Curve Current Page",
+                ["userToolTip"] = "Convert all text on current page to curves",
+                ["noBmpOnMenu"] = "true"
+            });
+            EnsureItemData(itemsNode, CmdCurveAllPagesGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.CurveAllPages",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Curve All Pages",
+                ["userToolTip"] = "Convert all text across all pages to curves",
+                ["noBmpOnMenu"] = "true"
+            });
+            EnsureItemData(itemsNode, CmdCurveSelectionGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.CurveSelection",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Curve Selected Objects",
+                ["userToolTip"] = "Convert selected text objects to curves",
                 ["noBmpOnMenu"] = "true"
             });
 
+            // --- FEATURE 2: EXPORT ---
+            EnsureItemData(itemsNode, FlyoutExportGuid, new Dictionary<string, string>
+            {
+                ["type"] = "flyout",
+                ["flyoutBarRef"] = CBarExportGuid,
+                ["userCaption"] = "CorelMate Export",
+                ["userToolTip"] = "Export as ID Card or Print PDF",
+                ["userCreated"] = "true",
+                ["noBmpOnMenu"] = "true"
+            });
+            EnsureItemData(itemsNode, CmdExportIdCardGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ExportAsIdCard",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Export As ID Card",
+                ["userToolTip"] = "Export ID card template metadata (JSON) and editable vector PDF",
+                ["noBmpOnMenu"] = "true"
+            });
+            EnsureItemData(itemsNode, CmdExportPrintGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ExportAsPrint",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Export As Print",
+                ["userToolTip"] = "Export print-ready CMYK PDF with text curved",
+                ["noBmpOnMenu"] = "true"
+            });
+
+            // --- FEATURE 3: COLOR ---
+            EnsureItemData(itemsNode, FlyoutColorGuid, new Dictionary<string, string>
+            {
+                ["type"] = "flyout",
+                ["flyoutBarRef"] = CBarColorGuid,
+                ["userCaption"] = "CorelMate Color",
+                ["userToolTip"] = "Convert colors and bitmaps to CMYK or RGB",
+                ["userCreated"] = "true",
+                ["noBmpOnMenu"] = "true"
+            });
+            EnsureItemData(itemsNode, CmdColorCmykGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ConvertToCmyk",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Convert to CMYK",
+                ["userToolTip"] = "Convert all vector colors and bitmap images to CMYK",
+                ["noBmpOnMenu"] = "true"
+            });
+            EnsureItemData(itemsNode, CmdColorRgbGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ConvertToRgb",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Convert to RGB",
+                ["userToolTip"] = "Convert all vector colors and bitmap images to RGB",
+                ["noBmpOnMenu"] = "true"
+            });
+
+            // Master CorelMate flyout item
             EnsureItemData(itemsNode, CorelMateMenuFlyoutGuid, new Dictionary<string, string>
             {
                 ["type"] = "flyout",
@@ -105,151 +203,98 @@ public static class CorelWorkspacePatcher
                 ["userCreated"] = "true",
                 ["noBmpOnMenu"] = "true"
             });
-
-            EnsureItemData(itemsNode, ItemConvertPageCurvesGuid, new Dictionary<string, string>
-            {
-                ["type"] = "checkButton",
-                ["check"] = $"*Docker('{DockerGuid}')",
-                ["userCaption"] = "Convert Page to Curves (Docker)",
-                ["userToolTip"] = "Open CorelMate Curves Docker to convert active page text to curves",
-                ["noBmpOnMenu"] = "true"
-            });
-
-            EnsureItemData(itemsNode, ItemConvertAllCurvesGuid, new Dictionary<string, string>
-            {
-                ["type"] = "button",
-                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ConvertAllToCurves",
-                ["dynamicCategory"] = "2cc24a3e-fe24-4708-9a74-9c75406eebcd",
-                ["userCaption"] = "Convert All to Curves (Macro)",
-                ["userToolTip"] = "Execute CorelDRAW Convert All to Curves macro",
-                ["noBmpOnMenu"] = "true"
-            });
-
-            EnsureItemData(itemsNode, ItemConvertSelCurvesGuid, new Dictionary<string, string>
-            {
-                ["type"] = "checkButton",
-                ["check"] = $"*Docker('{DockerGuid}')",
-                ["userCaption"] = "Convert Selection to Curves (Docker)",
-                ["userToolTip"] = "Open CorelMate Curves Docker for selected text objects",
-                ["noBmpOnMenu"] = "true"
-            });
-
-            EnsureItemData(itemsNode, ItemInspectorGuid, new Dictionary<string, string>
-            {
-                ["type"] = "checkButton",
-                ["check"] = $"*Docker('{DockerGuid}')",
-                ["userCaption"] = "Document Inspector (Docker)",
-                ["userToolTip"] = "Open CorelMate Document & Object Inspector",
-                ["noBmpOnMenu"] = "true"
-            });
-
-            EnsureItemData(itemsNode, ItemBadgesGuid, new Dictionary<string, string>
-            {
-                ["type"] = "checkButton",
-                ["check"] = $"*Docker('{DockerGuid}')",
-                ["userCaption"] = "Badge Generator (Docker)",
-                ["userToolTip"] = "Open CorelMate Batch Badge Generator",
-                ["noBmpOnMenu"] = "true"
-            });
-
-            EnsureItemData(itemsNode, ItemAboutGuid, new Dictionary<string, string>
-            {
-                ["type"] = "checkButton",
-                ["check"] = $"*Docker('{DockerGuid}')",
-                ["userCaption"] = "About CorelMate",
-                ["userToolTip"] = "About CorelMate Suite",
-                ["noBmpOnMenu"] = "true"
-            });
         }
 
-        // 3. Create or update flyout menu <commandBarData>
-        var cbNode = xml.SelectSingleNode($"//commandBars/commandBarData[@guid='{CorelMateCommandBarGuid}']") as XmlElement;
-        if (cbNode == null)
+        // 3. Ensure <commandBars> and flyout menus exist
+        var cbs = xml.SelectSingleNode("//commandBars") as XmlElement;
+        if (cbs == null)
         {
-            var cbs = xml.SelectSingleNode("//commandBars") as XmlElement;
-            if (cbs == null)
-            {
-                cbs = xml.CreateElement("commandBars");
-                xml.DocumentElement?.AppendChild(cbs);
-            }
-
-            if (cbs != null)
-            {
-                cbNode = xml.CreateElement("commandBarData");
-                cbNode.SetAttribute("guid", CorelMateCommandBarGuid);
-                cbNode.SetAttribute("type", "menu");
-                cbNode.SetAttribute("nonLocalizableName", "CorelMate");
-                cbNode.SetAttribute("flyout", "true");
-                var m = xml.CreateElement("menu");
-
-                string[] itemGuids =
-                {
-                    ItemShowDockerGuid,
-                    SeparatorItemGuid,
-                    ItemConvertPageCurvesGuid,
-                    ItemConvertAllCurvesGuid,
-                    ItemConvertSelCurvesGuid,
-                    SeparatorItemGuid,
-                    ItemInspectorGuid,
-                    ItemBadgesGuid,
-                    SeparatorItemGuid,
-                    ItemAboutGuid
-                };
-
-                foreach (var id in itemGuids)
-                {
-                    var it = xml.CreateElement("item");
-                    it.SetAttribute("guidRef", id);
-                    m.AppendChild(it);
-                }
-
-                cbNode.AppendChild(m);
-                cbs.AppendChild(cbNode);
-            }
+            cbs = xml.CreateElement("commandBars");
+            xml.DocumentElement?.AppendChild(cbs);
         }
 
-        // 4. Inject into Main Navigation Bar modes (ModeWelcomeGuid & ModeDocOpenGuid)
+        if (cbs != null)
+        {
+            // 3a. Curves command bar
+            EnsureCommandBarMenu(cbs, CBarCurvesGuid, "CorelMate Curves", new[]
+            {
+                CmdCurveCurrentPageGuid,
+                CmdCurveAllPagesGuid,
+                CmdCurveSelectionGuid
+            });
+
+            // 3b. Export command bar
+            EnsureCommandBarMenu(cbs, CBarExportGuid, "CorelMate Export", new[]
+            {
+                CmdExportIdCardGuid,
+                CmdExportPrintGuid
+            });
+
+            // 3c. Color command bar
+            EnsureCommandBarMenu(cbs, CBarColorGuid, "CorelMate Color", new[]
+            {
+                CmdColorCmykGuid,
+                CmdColorRgbGuid
+            });
+
+            // Remove obsolete master CorelMate command bar if present
+            var oldMasterBar = cbs.SelectSingleNode($"commandBarData[@guid='{CorelMateCommandBarGuid}']");
+            oldMasterBar?.ParentNode?.RemoveChild(oldMasterBar);
+        }
+
+        // 4. Inject 3 Direct Feature Flyouts into Main Navigation Bar modes (ModeWelcomeGuid & ModeDocOpenGuid)
         string[] modes = { ModeWelcomeGuid, ModeDocOpenGuid };
+        string[] directNavItems = { FlyoutCurvesGuid, FlyoutExportGuid, FlyoutColorGuid };
         foreach (var mGuid in modes)
         {
             var modeNode = xml.SelectSingleNode($"//commandBarData[@guid='{MenuBarGuid}']/menubar/modeData[@guid='{mGuid}']") as XmlElement;
             if (modeNode != null)
             {
-                var existing = modeNode.SelectSingleNode($"item[@guidRef='{CorelMateMenuFlyoutGuid}']");
-                if (existing == null)
+                // Remove obsolete CorelMate master menu from navbar
+                var oldMaster = modeNode.SelectSingleNode($"item[@guidRef='{CorelMateMenuFlyoutGuid}']");
+                oldMaster?.ParentNode?.RemoveChild(oldMaster);
+
+                foreach (var navId in directNavItems)
                 {
-                    var newIt = xml.CreateElement("item");
-                    newIt.SetAttribute("guidRef", CorelMateMenuFlyoutGuid);
-                    modeNode.AppendChild(newIt);
+                    var existing = modeNode.SelectSingleNode($"item[@guidRef='{navId}']");
+                    if (existing == null)
+                    {
+                        var newIt = xml.CreateElement("item");
+                        newIt.SetAttribute("guidRef", navId);
+                        modeNode.AppendChild(newIt);
+                    }
                 }
             }
         }
+    }
 
-        // 5. Inject into Window menu modeData
-        var winMode = xml.SelectSingleNode($"//modeData[@guid='{WindowMenuModeGuid}']") as XmlElement;
-        if (winMode != null)
+    private static void EnsureCommandBarMenu(XmlElement commandBarsNode, string guid, string name, string[] itemGuids)
+    {
+        var cbNode = commandBarsNode.SelectSingleNode($"commandBarData[@guid='{guid}']") as XmlElement;
+        if (cbNode == null)
         {
-            var existing = winMode.SelectSingleNode($"item[@guidRef='{ItemShowDockerGuid}']");
-            if (existing == null)
-            {
-                var newIt = xml.CreateElement("item");
-                newIt.SetAttribute("guidRef", ItemShowDockerGuid);
-                winMode.AppendChild(newIt);
-            }
+            cbNode = commandBarsNode.OwnerDocument.CreateElement("commandBarData");
+            cbNode.SetAttribute("guid", guid);
+            cbNode.SetAttribute("type", "menu");
+            cbNode.SetAttribute("nonLocalizableName", name);
+            cbNode.SetAttribute("flyout", "true");
+            commandBarsNode.AppendChild(cbNode);
         }
 
-        // 6. Ensure in right dockers tray
-        var tray = xml.SelectSingleNode($"//viewHost[@guid='{RightDockTrayGuid}']") as XmlElement;
-        if (tray != null)
+        var menuNode = cbNode.SelectSingleNode("menu") as XmlElement;
+        if (menuNode == null)
         {
-            var existing = tray.SelectSingleNode($"dockerData[@guidRef='{DockerGuid}']");
-            if (existing == null)
-            {
-                var dRef = xml.CreateElement("dockerData");
-                dRef.SetAttribute("guidRef", DockerGuid);
-                dRef.SetAttribute("category", "view+docker");
-                tray.AppendChild(dRef);
-            }
+            menuNode = cbNode.OwnerDocument.CreateElement("menu");
+            cbNode.AppendChild(menuNode);
+        }
+
+        // Rebuild items in correct order
+        menuNode.RemoveAll();
+        foreach (var id in itemGuids)
+        {
+            var it = cbNode.OwnerDocument.CreateElement("item");
+            it.SetAttribute("guidRef", id);
+            menuNode.AppendChild(it);
         }
     }
 

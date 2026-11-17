@@ -183,16 +183,22 @@ try
 	CorelWorkspacePatcher.PatchWorkspaceXml(wsXmlDoc, @"C:\CorelMate\CorelMate.UI.dll");
 
 	var dNode = wsXmlDoc.SelectSingleNode($"//dockers/dockerData[@guid='{CorelWorkspacePatcher.DockerGuid}']") as System.Xml.XmlElement;
-	if (dNode == null || dNode.GetAttribute("userCaption") != "CorelMate") throw new InvalidOperationException("Workspace dockerData userCaption patch failed.");
+	if (dNode != null) throw new InvalidOperationException("Workspace dockerData should be removed for zero-docker mode.");
 
-	var menubarDocMode = wsXmlDoc.SelectSingleNode($"//commandBarData[@guid='{CorelWorkspacePatcher.MenuBarGuid}']/menubar/modeData[@guid='{CorelWorkspacePatcher.ModeDocOpenGuid}']/item[@guidRef='{CorelWorkspacePatcher.CorelMateMenuFlyoutGuid}']");
-	if (menubarDocMode == null) throw new InvalidOperationException("Workspace menubar flyout item patch failed.");
+	var menubarCurves = wsXmlDoc.SelectSingleNode($"//commandBarData[@guid='{CorelWorkspacePatcher.MenuBarGuid}']/menubar/modeData[@guid='{CorelWorkspacePatcher.ModeDocOpenGuid}']/item[@guidRef='{CorelWorkspacePatcher.FlyoutCurvesGuid}']");
+	if (menubarCurves == null) throw new InvalidOperationException("Workspace menubar Curves flyout item patch failed.");
 
-	var winModeItem = wsXmlDoc.SelectSingleNode($"//modeData[@guid='{CorelWorkspacePatcher.WindowMenuModeGuid}']/item[@guidRef='{CorelWorkspacePatcher.ItemShowDockerGuid}']");
-	if (winModeItem == null) throw new InvalidOperationException("Workspace window menu docker toggle patch failed.");
+	var menubarExport = wsXmlDoc.SelectSingleNode($"//commandBarData[@guid='{CorelWorkspacePatcher.MenuBarGuid}']/menubar/modeData[@guid='{CorelWorkspacePatcher.ModeDocOpenGuid}']/item[@guidRef='{CorelWorkspacePatcher.FlyoutExportGuid}']");
+	if (menubarExport == null) throw new InvalidOperationException("Workspace menubar Export flyout item patch failed.");
 
-	var checkButtonItem = wsXmlDoc.SelectSingleNode($"//items/itemData[@guid='{CorelWorkspacePatcher.ItemShowDockerGuid}']") as System.Xml.XmlElement;
-	if (checkButtonItem == null || checkButtonItem.GetAttribute("check") != $"*Docker('{CorelWorkspacePatcher.DockerGuid}')") throw new InvalidOperationException("Workspace docker checkButton patch failed.");
+	var menubarColor = wsXmlDoc.SelectSingleNode($"//commandBarData[@guid='{CorelWorkspacePatcher.MenuBarGuid}']/menubar/modeData[@guid='{CorelWorkspacePatcher.ModeDocOpenGuid}']/item[@guidRef='{CorelWorkspacePatcher.FlyoutColorGuid}']");
+	if (menubarColor == null) throw new InvalidOperationException("Workspace menubar Color flyout item patch failed.");
+
+	var cmdItem = wsXmlDoc.SelectSingleNode($"//items/itemData[@guid='{CorelWorkspacePatcher.CmdCurveCurrentPageGuid}']") as System.Xml.XmlElement;
+	if (cmdItem == null || cmdItem.GetAttribute("dynamicCommand") != "ConvertAllToCurves.Converter.CurveCurrentPage")
+	{
+		throw new InvalidOperationException("Workspace dynamic macro command item patch failed.");
+	}
 
 	// 10. Workspace Archive .cdws In-Place Patch Test
 	var syntheticCdws = Path.Combine(tempRoot, "test_ws.cdws");
@@ -212,7 +218,9 @@ try
 		if (entry == null) throw new InvalidOperationException("Patched archive missing content/workspace.xml");
 		using var reader = new StreamReader(entry.Open(), Encoding.UTF8);
 		var patchedContent = reader.ReadToEnd();
-		if (!patchedContent.Contains("userCaption=\"CorelMate\"") || !patchedContent.Contains(CorelWorkspacePatcher.CorelMateMenuFlyoutGuid))
+		if (!patchedContent.Contains(CorelWorkspacePatcher.FlyoutCurvesGuid) ||
+		    !patchedContent.Contains(CorelWorkspacePatcher.FlyoutExportGuid) ||
+		    !patchedContent.Contains(CorelWorkspacePatcher.FlyoutColorGuid))
 		{
 			throw new InvalidOperationException("Patched archive content verification failed.");
 		}
