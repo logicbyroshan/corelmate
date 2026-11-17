@@ -60,14 +60,17 @@ Alternatives: Pure Win32 hooking or manual workspace editing.
 
 Consequences: Clean uninstall requires removing both the Addon directory and the GMS companion macro.
 
-## 2026-11-17: Page-to-Curves Architecture & Reference Reverse Engineering
+## 2026-11-17: Active Workspace In-Place Patching & Docker Accessibility
 
-Decision: Adopt recursive in-place shape traversal and host optimization patterns observed from reverse-engineering `CdrPreflight`, but improve safety with non-destructive group preservation, document copy preservation (`SaveAsCopy`/`File.Copy` with `_curves.cdr`), atomic undo command grouping, and WPF-based multi-scope preflight.
+Decision: Complement Addon XSLT deployment with direct in-place XML patching of active CorelDRAW workspaces (`_default.cdws` -> `content/workspace.xml`) and provide native `*Docker(...)` toggle bindings in the main menubar and Window menu.
 
-Context: Users require converting text to curves across whole pages, selections, or full documents for prepress/preflight while preserving layout hierarchy and original document copies. CdrPreflight showed effective optimization flags (`Optimization = True`, `EventsEnabled = False`) but used obsolete IE browser dockers, lacked document backups, and swallowed errors silently.
+Context: While Addon XSLT works on system-wide addon installs, CorelDRAW v27 defaults `AddDocker` captions to the C# UserControl class name (`CorelMate.UI.CorelMatePanel`) in the active workspace and only scans user AppData addons if registered in `<Addons>`. Closing the docker also hid it without an obvious UI entry point if the navbar had not yet updated.
 
-Reason: Non-destructive in-place conversion preserves groups, PowerClips, and text-on-path without destructive ungrouping. Document copy preservation prevents accidental irreversible data loss.
+Reason: Directly patching `_default.cdws` in user AppData:
+1. Immediately fixes the docker title bar and right-side tab strip to display `CorelMate` instead of the C# class name.
+2. Injects the `CorelMate` top-level navbar menu item directly next to `Help`.
+3. Injects `CorelMate Docker` toggle commands into both `CorelMate` and `Window` menus using CorelDRAW's native `*Docker('{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}')` binding, providing instant toggle, live checkmarks, and closed-docker reopening without any VBA dependency.
 
-Alternatives: Blind ungrouping (breaks visual effects/clipping), rasterization (destroys vector scalability), or external PDF conversion.
+Alternatives: Relying exclusively on XSLT merging or asking users to manually drag commands via Tools -> Customization.
 
-Consequences: COM calls remain strictly isolated in `CorelMate.Host`; `CorelMate.Curves` holds pure preflight and summary contracts.
+Consequences: `CorelWorkspacePatcher` added to `CorelMate.Core` for pure XML and ZIP in-place manipulation, tested thoroughly by `CorelMate.Tests`. Installed automatically during developer and production installation scripts.

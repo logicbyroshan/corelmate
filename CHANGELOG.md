@@ -16,6 +16,17 @@ Project branding and open-source documentation details are recorded in [.agents/
  
 Task 9 Modern UI Design System details are recorded in [.agents/CHANGELOG.md](.agents/CHANGELOG.md).
 
+## CorelMate 1.18.1 (Update 1) - Docker Title, Navbar Integration & Accessibility Fix
+
+- **Docker Title Correction**: Fixed Docker title and vertical tab caption displaying `CorelMate.UI.CorelMatePanel`; now cleanly and permanently displays `CorelMate` across all windows and dockers trays.
+- **Native Navbar Integration**: Corrected top navigation bar integration in CorelDRAW (`_default.cdws` `workspace.xml`) across Welcome Screen and Document Open modes, placing `CorelMate` directly on the main menu bar alongside `File | Edit | ... | Window | Help | CorelMate`.
+- **Closed Docker Accessibility**: Added permanent entry points to re-access and toggle the Docker when closed via:
+  - Main navigation menu: `CorelMate -> CorelMate Docker` (native `*Docker(...)` binding with live checkmark status)
+  - Window menu: `Window -> CorelMate Docker`
+  - Right-side vertical dockers tray tab strip (`CorelMate` tab)
+  - Quick launch script: `scripts/Show-CorelMate.ps1`
+- **CorelWorkspacePatcher**: Built host-independent, pure XML and ZIP in-place workspace patcher in `CorelMate.Core` covered by executable smoke tests in `CorelMate.Tests`.
+
 ## CorelMate 1.18.1 - Production Release
 
 - **Official Release Designation**: Promoted CorelMate to official release `v1.18.1`.

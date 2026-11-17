@@ -161,6 +161,61 @@ try
 	var xlsx = XlsxImportSource.Read(xlsxPath);
 	var xlsxValidation = BadgeImportMapper.Validate(xlsx, new[] { "TITLE", "STANDARD" });
 	if (!xlsxValidation.IsValid || xlsx.WorksheetName != "Badges" || xlsxValidation.Rows.Count != 2 || xlsxValidation.Rows[1].GetValue("TITLE") != "मॉनिटर") throw new InvalidOperationException("XLSX import failed.");
+
+	// 9. Workspace Patcher XML & Archive Tests
+	var rawWsXml = @"<uiConfig>
+	<commandBars>
+		<commandBarData guid=""f3016f3c-2847-4557-b61a-a2d05319cf18"">
+			<menubar>
+				<modeData guid=""6d1d9e94-13f3-4517-a976-ba9154671db4""><item guidRef=""7aa80134-8e64-42d1-be0a-c7ec7f6c441f"" /></modeData>
+				<modeData guid=""76d73481-9076-44c9-821c-52de9408cce2""><item guidRef=""7aa80134-8e64-42d1-be0a-c7ec7f6c441f"" /></modeData>
+			</menubar>
+		</commandBarData>
+	</commandBars>
+	<commandBars><modeData guid=""6c91d5ab-d648-4364-96fb-3e71bcfaf70d""><item guidRef=""existing-win"" /></modeData></commandBars>
+	<layout><dockHost><viewHost guid=""bf2668a0-d25d-4eb8-97c6-c0f9fe6e7516"" category=""view+docker"" /></dockHost></layout>
+	<dockers><dockerData guid=""{A63F9C4C-64A3-4E91-9AC9-3A15C783D5D7}"" userCaption=""CorelMate.UI.CorelMatePanel"" dock=""fill"" /></dockers>
+	<items><itemData guid=""eaa2648a-69d1-46dd-8527-9cd9a00c467f"" type=""wpfhost"" /></items>
+</uiConfig>";
+	var wsXmlDoc = new System.Xml.XmlDocument();
+	wsXmlDoc.LoadXml(rawWsXml);
+	CorelWorkspacePatcher.PatchWorkspaceXml(wsXmlDoc, @"C:\CorelMate\CorelMate.UI.dll");
+
+	var dNode = wsXmlDoc.SelectSingleNode($"//dockers/dockerData[@guid='{CorelWorkspacePatcher.DockerGuid}']") as System.Xml.XmlElement;
+	if (dNode == null || dNode.GetAttribute("userCaption") != "CorelMate") throw new InvalidOperationException("Workspace dockerData userCaption patch failed.");
+
+	var menubarDocMode = wsXmlDoc.SelectSingleNode($"//commandBarData[@guid='{CorelWorkspacePatcher.MenuBarGuid}']/menubar/modeData[@guid='{CorelWorkspacePatcher.ModeDocOpenGuid}']/item[@guidRef='{CorelWorkspacePatcher.CorelMateMenuFlyoutGuid}']");
+	if (menubarDocMode == null) throw new InvalidOperationException("Workspace menubar flyout item patch failed.");
+
+	var winModeItem = wsXmlDoc.SelectSingleNode($"//modeData[@guid='{CorelWorkspacePatcher.WindowMenuModeGuid}']/item[@guidRef='{CorelWorkspacePatcher.ItemShowDockerGuid}']");
+	if (winModeItem == null) throw new InvalidOperationException("Workspace window menu docker toggle patch failed.");
+
+	var checkButtonItem = wsXmlDoc.SelectSingleNode($"//items/itemData[@guid='{CorelWorkspacePatcher.ItemShowDockerGuid}']") as System.Xml.XmlElement;
+	if (checkButtonItem == null || checkButtonItem.GetAttribute("check") != $"*Docker('{CorelWorkspacePatcher.DockerGuid}')") throw new InvalidOperationException("Workspace docker checkButton patch failed.");
+
+	// 10. Workspace Archive .cdws In-Place Patch Test
+	var syntheticCdws = Path.Combine(tempRoot, "test_ws.cdws");
+	using (var arch = ZipFile.Open(syntheticCdws, ZipArchiveMode.Create))
+	{
+		AddEntry(arch, "mimetype", "application/vnd.corel.draw.workspace");
+		AddEntry(arch, "content/workspace.xml", rawWsXml);
+	}
+	if (!CorelWorkspacePatcher.PatchWorkspaceArchive(syntheticCdws, @"C:\CorelMate\CorelMate.UI.dll", out var patchMsg))
+	{
+		throw new InvalidOperationException("Workspace archive patch returned false: " + patchMsg);
+	}
+
+	using (var readArch = ZipFile.OpenRead(syntheticCdws))
+	{
+		var entry = readArch.GetEntry("content/workspace.xml");
+		if (entry == null) throw new InvalidOperationException("Patched archive missing content/workspace.xml");
+		using var reader = new StreamReader(entry.Open(), Encoding.UTF8);
+		var patchedContent = reader.ReadToEnd();
+		if (!patchedContent.Contains("userCaption=\"CorelMate\"") || !patchedContent.Contains(CorelWorkspacePatcher.CorelMateMenuFlyoutGuid))
+		{
+			throw new InvalidOperationException("Patched archive content verification failed.");
+		}
+	}
 }
 finally
 {

@@ -5,6 +5,8 @@
     <ProjectReference Include="..\CorelMate.Infrastructure\CorelMate.Infrastructure.csproj" />
     <ProjectReference Include="..\CorelMate.Badges\CorelMate.Badges.csproj" />
     <ProjectReference Include="..\CorelMate.Curves\CorelMate.Curves.csproj" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="Corel.Interop.CorelDRAW" EmbedInteropTypes="false"><HintPath>C:\Program Files\Corel\CorelDRAW Graphics Suite\27\Programs64\Assemblies\Corel.Interop.CorelDRAW.dll</HintPath><Private>False</Private></Reference>
     <Reference Include="Corel.Interop.VGCore" EmbedInteropTypes="false"><HintPath>C:\Program Files\Corel\CorelDRAW Graphics Suite\27\Programs64\Assemblies\Corel.Interop.VGCore.dll</HintPath><Private>False</Private></Reference>
   </ItemGroup>
