@@ -1,0 +1,63 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <!-- CorelDRAW 2018-2019 (v20-v21) Charcoal Dark Theme Profile -->
+  <Color x:Key="CorelMateAccentColor">#007ACC</Color>
+  <Color x:Key="CorelMateAccentHoverColor">#1C97EA</Color>
+  <Color x:Key="CorelMateAccentPressedColor">#005A9E</Color>
+
+  <SolidColorBrush x:Key="CorelMateAccentBrush" Color="{StaticResource CorelMateAccentColor}" />
+  <SolidColorBrush x:Key="CorelMateAccentHoverBrush" Color="{StaticResource CorelMateAccentHoverColor}" />
+  <SolidColorBrush x:Key="CorelMateAccentPressedBrush" Color="{StaticResource CorelMateAccentPressedColor}" />
+
+  <LinearGradientBrush x:Key="CorelMatePrimaryGradientBrush" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#007ACC" Offset="0.0" />
+    <GradientStop Color="#005A9E" Offset="1.0" />
+  </LinearGradientBrush>
+
+  <LinearGradientBrush x:Key="CorelMatePrimaryGradientHoverBrush" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#1C97EA" Offset="0.0" />
+    <GradientStop Color="#007ACC" Offset="1.0" />
+  </LinearGradientBrush>
+
+  <!-- Surface & Border Tokens -->
+  <SolidColorBrush x:Key="CorelMateAppBackgroundBrush" Color="#252526" />
+  <SolidColorBrush x:Key="CorelMateSurfaceBrush" Color="#2D2D30" />
+  <SolidColorBrush x:Key="CorelMateSurfaceRaisedBrush" Color="#3E3E42" />
+  <SolidColorBrush x:Key="CorelMateSurfaceSubtleBrush" Color="#2A2A2D" />
+  <SolidColorBrush x:Key="CorelMateCardBorderBrush" Color="#454549" />
+  <SolidColorBrush x:Key="CorelMateBorderBrush" Color="#555555" />
+  <SolidColorBrush x:Key="CorelMateFocusBorderBrush" Color="#007ACC" />
+
+  <!-- Typography Tokens -->
+  <SolidColorBrush x:Key="CorelMateTextPrimaryBrush" Color="#F1F1F1" />
+  <SolidColorBrush x:Key="CorelMateTextSecondaryBrush" Color="#CCCCCC" />
+  <SolidColorBrush x:Key="CorelMateTextMutedBrush" Color="#999999" />
+  <SolidColorBrush x:Key="CorelMateTextOnAccentBrush" Color="#FFFFFF" />
+
+  <!-- Feedback Colors -->
+  <SolidColorBrush x:Key="CorelMateSuccessBrush" Color="#4EC9B0" />
+  <SolidColorBrush x:Key="CorelMateSuccessBgBrush" Color="#1E3832" />
+  <SolidColorBrush x:Key="CorelMateSuccessBorderBrush" Color="#2D5A50" />
+
+  <SolidColorBrush x:Key="CorelMateWarningBrush" Color="#CE9178" />
+  <SolidColorBrush x:Key="CorelMateWarningBgBrush" Color="#3D2E24" />
+  <SolidColorBrush x:Key="CorelMateWarningBorderBrush" Color="#604838" />
+
+  <SolidColorBrush x:Key="CorelMateErrorBrush" Color="#F44747" />
+  <SolidColorBrush x:Key="CorelMateErrorBgBrush" Color="#3C1E1E" />
+  <SolidColorBrush x:Key="CorelMateErrorBorderBrush" Color="#662828" />
+
+  <SolidColorBrush x:Key="CorelMateInfoBrush" Color="#569CD6" />
+  <SolidColorBrush x:Key="CorelMateInfoBgBrush" Color="#1C2E42" />
+  <SolidColorBrush x:Key="CorelMateInfoBorderBrush" Color="#2C4869" />
+
+  <SolidColorBrush x:Key="CorelMatePillBgBrush" Color="#333337" />
+  <SolidColorBrush x:Key="CorelMatePillBorderBrush" Color="#434346" />
+
+  <!-- Dimensions -->
+  <CornerRadius x:Key="CorelMateCardCornerRadius">3</CornerRadius>
+  <CornerRadius x:Key="CorelMateButtonCornerRadius">3</CornerRadius>
+  <CornerRadius x:Key="CorelMatePillCornerRadius">4</CornerRadius>
+</ResourceDictionary>
+

@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using CorelApplication = Corel.Interop.CorelDRAW.Application;
+using CorelMate.Core;
 using CorelMate.Infrastructure;
 
 namespace CorelMate.Host;
@@ -16,14 +17,14 @@ public sealed class CorelMateAddIn
     private readonly ICorelMateLogger logger;
     private CorelApplication? application;
 
-    public CorelMateAddIn() : this(new NullCorelMateLogger()) { }
+    public CorelMateAddIn() : this(new FileCorelMateLogger()) { }
 
     internal CorelMateAddIn(ICorelMateLogger logger) => this.logger = logger;
 
     public void Initialize(CorelApplication hostApplication)
     {
         application = hostApplication ?? throw new ArgumentNullException(nameof(hostApplication));
-        logger.Info("CorelMate host initialized.");
+        logger.Info($"CorelMate host initialized with CorelDRAW {application.Version}.");
     }
 
     public void RegisterDocker()
@@ -38,6 +39,26 @@ public sealed class CorelMateAddIn
     {
         if (application == null) throw new InvalidOperationException("CorelMate has not been initialized with CorelDRAW.");
         application.FrameWork.ShowDocker(DockerGuid);
+        logger.Info("CorelMate Docker shown.");
     }
 
+    public void HideDocker()
+    {
+        if (application == null) throw new InvalidOperationException("CorelMate has not been initialized with CorelDRAW.");
+        application.FrameWork.HideDocker(DockerGuid);
+        logger.Info("CorelMate Docker hidden.");
+    }
+
+    public bool IsDockerVisible()
+    {
+        if (application == null) return false;
+        try
+        {
+            return application.FrameWork.IsDockerVisible(DockerGuid);
+        }
+        catch
+        {
+            return false;
+        }
+    }
 }

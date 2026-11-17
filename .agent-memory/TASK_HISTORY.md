@@ -1,6 +1,33 @@
 # Task History
 
-## 2026-09-16: Initial Agent Bootstrap
+## 2026-11-17: Master Engineering Audit, UI Redesign, Version Adaptation & Menu Integration
+
+Task: Complete engineering audit, redesign the UI, integrate into the CorelDRAW application navigation menu, implement version-aware UI adaptation (2017–2026), and verify all features.
+
+Reason: Fulfill Master Engineering Prompt requirements to transition CorelMate into a stable, version-adaptive, natively integrated CorelDRAW productivity companion.
+
+Files/areas affected: `CorelMate.Core`, `CorelMate.Host`, `CorelMate.UI`, `CorelMate.Infrastructure`, `tests/CorelMate.Tests`, `scripts/`, `packaging/`, `.agent-memory/`, `CHANGELOG.md`.
+
+What changed:
+1. Created `CorelVersion`, `CorelInstallationInfo`, and `CorelCompatibilityRegistry` supporting CorelDRAW 2017 through 2026 (v19–v28).
+2. Built `CorelVersionDetector` for multi-version registry and COM inspection.
+3. Designed and added 5 authentic version design profiles (`Theme2017.xaml`, `Theme2019.xaml`, `Theme2021.xaml`, `Theme2023.xaml`, `Theme2026.xaml`) managed dynamically by `CorelMateThemeManager`.
+4. Implemented native CorelDRAW main navigation menu integration via Addon XSLT (`UserDraw.xslt` + `Coreldrw.addon`) and companion GMS macro (`CorelMate.gms`).
+5. Implemented `CorelDocumentInspector` measuring active document metrics, shapes breakdown, and unique font analysis.
+6. Redesigned `CorelMatePanel.xaml` into a compact, professional dashboard with 6 segmented views (Dashboard, Badges, Curves, Inspect, Compat, Settings).
+7. Expanded `CorelMate.Tests` covering version compatibility, major version parsing, document metrics, file logging, badge engine math, placeholder replacement, and CSV/XLSX imports.
+8. Enhanced `Install-CorelMate.ps1` and `Install-Dev.ps1` with multi-version detection, non-elevated user AppData deployment, and clean uninstallation.
+9. Validated complete release packaging with `Build-Release.ps1` producing `artifacts/CorelMate-0.2.0-docker.zip`.
+
+Important decisions: Modular boundary preserved; CorelDRAW COM types strictly isolated in `CorelMate.Host`; UI communicates via abstracted host properties; User AppData used for unprivileged installation.
+
+Testing performed:
+- All unit and smoke tests passed in `CorelMate.Tests`.
+- Release build passed with 0 warnings and 0 errors.
+- Real-host installation and Docker display in CorelDRAW 27.2.0.135 passed.
+- Package build and packaging safety validation passed.
+
+Follow-up: Merge through GitHub PR workflow to `main`.
 
 Task: Audit the existing CorelMate repository and establish persistent agent memory.
 

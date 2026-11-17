@@ -35,3 +35,27 @@ Reason: Preserve reviewability, checks, and a clean protected-main workflow.
 Alternatives: Direct main commits or local-only changes.
 
 Consequences: Every future task must include branch creation, push, PR, checks/review, merge, and cleanup.
+
+## 2026-11-17: Version Detection & Multi-Era UI Profiles
+
+Decision: Establish a central CorelCompatibilityRegistry in `CorelMate.Core` supporting CorelDRAW 2017–2026 (v19–v28), and provide 5 authentic version design profiles in `CorelMate.UI/Themes`.
+
+Context: Users operate multiple CorelDRAW versions from 2017 to 2026. A generic modern UI looks out of place in older versions, and hardcoding v27 blocked older supported suites.
+
+Reason: Delivers authentic native look-and-feel across all supported versions while maintaining a single shared codebase and testing suite.
+
+Alternatives: Separate binaries per version or single static theme.
+
+Consequences: Dynamic theme merging via `CorelMateThemeManager`; UI tokens must use DynamicResource.
+
+## 2026-11-17: Native Menu Integration Strategy
+
+Decision: Combine native Addon XSLT stylesheet (`UserDraw.xslt` + `Coreldrw.addon`) with companion GMS macro (`CorelMate.gms`) and COM Docker automation.
+
+Context: CorelMate needed to appear as the last main navigation menu item in CorelDRAW without disrupting native menus or disappearing on restart.
+
+Reason: CorelDRAW's native framework natively parses Addon XSLT transforms during menu bar assembly (`f3016f3c-2847-4557-b61a-a2d05319cf18`). Deploying to `%APPDATA%\Corel\<Suite>\Draw\Addons` allows non-elevated installation and restart persistence.
+
+Alternatives: Pure Win32 hooking or manual workspace editing.
+
+Consequences: Clean uninstall requires removing both the Addon directory and the GMS companion macro.

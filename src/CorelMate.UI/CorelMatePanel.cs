@@ -1,12 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using Microsoft.Win32;
 using CorelMate.Badges;
+using CorelMate.Core;
 using CorelMate.Host;
+using CorelMate.UI.Themes;
 
 namespace CorelMate.UI;
 
@@ -26,11 +29,15 @@ public sealed partial class CorelMatePanel : UserControl
         public TextBox QuantityBox { get; }
     }
 
+    private readonly CorelDrawHost? host;
     private readonly CorelDrawBadgeGenerator? generator;
     private readonly CorelTextToCurvesConverter? curvesConverter;
+    private readonly CorelDocumentInspector? documentInspector;
     private readonly List<RowEditor> rowEditors = new List<RowEditor>();
     private CorelBadgeMaster? master;
     private bool isGenerating;
+    private int detectedMajorVersion = 27;
+    private CorelEra currentEra = CorelEra.AdaptivePro2026;
 
     public CorelMatePanel() : this("2026 / v27")
     {
@@ -41,13 +48,35 @@ public sealed partial class CorelMatePanel : UserControl
         InitializeComponent();
         try
         {
-            var corelHost = CorelDrawHost.ConnectToRunningInstance();
-            generator = new CorelDrawBadgeGenerator(corelHost);
-            curvesConverter = new CorelTextToCurvesConverter(corelHost);
-            StatusText.Text = "CorelDRAW " + targetVersion + " connected. Select a master badge template.";
+            host = CorelDrawHost.ConnectToRunningInstance();
+            generator = new CorelDrawBadgeGenerator(host);
+            curvesConverter = new CorelTextToCurvesConverter(host);
+            documentInspector = new CorelDocumentInspector(host);
+
+            // Version Detection & Compatibility Evaluation
+            var rawVersion = host.HostVersionString;
+            detectedMajorVersion = host.HostMajorVersion;
+            if (detectedMajorVersion <= 0) detectedMajorVersion = 27;
+
+            var compat = CorelCompatibilityRegistry.Evaluate(detectedMajorVersion, rawVersion);
+            currentEra = CorelCompatibilityRegistry.GetEraForVersion(detectedMajorVersion);
+
+            // Apply version-adaptive UI styling
+            CorelMateThemeManager.ApplyTheme(this, currentEra);
+
+            // Header & Status Updates
+            HeaderEraText.Text = $"v{detectedMajorVersion} / {currentEra}";
+            StatusText.Text = $"{compat.VersionDescription} connected. Ready.";
             StatusBadgeText.Text = "Connected";
             StatusIndicatorDot.Fill = (Brush)FindResource("CorelMateSuccessBrush");
-            HostVersionText.Text = "CorelDRAW Graphics Suite " + targetVersion;
+            HostVersionText.Text = compat.VersionDescription;
+            DashHostVersionText.Text = compat.VersionDescription;
+            DashArchText.Text = Environment.Is64BitOperatingSystem ? "64-bit (x64)" : "32-bit (x86)";
+            CompatHostText.Text = $"{compat.VersionDescription} ({rawVersion})";
+            CompatStatusText.Text = compat.StatusMessage;
+            CompatEraText.Text = $"{currentEra} Era Styling";
+
+            UpdateActiveDocumentDashboard();
         }
         catch (Exception exception)
         {
@@ -55,16 +84,105 @@ public sealed partial class CorelMatePanel : UserControl
             StatusBadgeText.Text = "Offline";
             StatusIndicatorDot.Fill = (Brush)FindResource("CorelMateErrorBrush");
             HostVersionText.Text = "Disconnected (" + exception.Message + ")";
+            DashHostVersionText.Text = "Disconnected";
+            DashDocumentText.Text = "Active Document: Offline";
+            CompatStatusText.Text = "Offline: " + exception.Message;
+        }
+    }
+
+    private void UpdateActiveDocumentDashboard()
+    {
+        try
+        {
+            var summary = host?.ActiveDocumentSummary;
+            DashDocumentText.Text = !string.IsNullOrEmpty(summary)
+                ? $"Active Document: {summary}"
+                : "Active Document: None (Open or create a document in CorelDRAW)";
+        }
+        catch
+        {
+            DashDocumentText.Text = "Active Document: None";
         }
     }
 
     private void TabRadio_Checked(object sender, RoutedEventArgs e)
     {
-        if (BadgesTabContent == null || CurvesTabContent == null || SettingsTabContent == null) return;
+        if (DashboardTabContent == null || BadgesTabContent == null || CurvesTabContent == null ||
+            InspectorTabContent == null || CompatTabContent == null || SettingsTabContent == null) return;
+
+        DashboardTabContent.Visibility = TabDashboardRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         BadgesTabContent.Visibility = TabBadgesRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         CurvesTabContent.Visibility = TabCurvesRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        InspectorTabContent.Visibility = TabInspectorRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        CompatTabContent.Visibility = TabCompatRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         SettingsTabContent.Visibility = TabInfoRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+
+        if (TabDashboardRadio.IsChecked == true) UpdateActiveDocumentDashboard();
+        if (TabInspectorRadio.IsChecked == true) RefreshDocumentInspection();
     }
+
+    private void DashGoBadges_Click(object sender, RoutedEventArgs e) { TabBadgesRadio.IsChecked = true; }
+    private void DashGoCurves_Click(object sender, RoutedEventArgs e) { TabCurvesRadio.IsChecked = true; }
+    private void DashGoInspector_Click(object sender, RoutedEventArgs e) { TabInspectorRadio.IsChecked = true; }
+    private void DashGoCompat_Click(object sender, RoutedEventArgs e) { TabCompatRadio.IsChecked = true; }
+
+    #region Document Inspector Feature
+
+    private void RefreshInspectorButton_Click(object sender, RoutedEventArgs e)
+    {
+        RefreshDocumentInspection();
+    }
+
+    private void RefreshDocumentInspection()
+    {
+        try
+        {
+            if (documentInspector == null) throw new InvalidOperationException("CorelDRAW is not connected.");
+            var metrics = documentInspector.InspectActiveDocument();
+
+            InspDocNameText.Text = metrics.Name;
+            InspDimensionsText.Text = $"{metrics.DimensionsString} ({metrics.ColorMode})";
+            InspTotalShapesText.Text = metrics.TotalShapes.ToString(CultureInfo.InvariantCulture);
+            InspTextShapesText.Text = metrics.TextShapes.ToString(CultureInfo.InvariantCulture);
+            InspCurvesShapesText.Text = metrics.CurveShapes.ToString(CultureInfo.InvariantCulture);
+            InspBitmapsShapesText.Text = metrics.BitmapShapes.ToString(CultureInfo.InvariantCulture);
+
+            if (metrics.UniqueFonts.Count > 0)
+            {
+                InspFontsListText.Text = $"{metrics.UniqueFonts.Count} font(s) detected:\r\n• " + string.Join("\r\n• ", metrics.UniqueFonts);
+            }
+            else
+            {
+                InspFontsListText.Text = "No text objects with fonts detected on the active page.";
+            }
+        }
+        catch (Exception ex)
+        {
+            InspDocNameText.Text = "Inspection unavailable";
+            InspDimensionsText.Text = "-";
+            InspFontsListText.Text = ex.Message;
+        }
+    }
+
+    #endregion
+
+    #region Version-Adaptive Theme Switching
+
+    private void ThemeBtn_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string tag)
+        {
+            var resolved = CorelMateThemeManager.ResolveEra(tag, detectedMajorVersion);
+            currentEra = resolved;
+            CorelMateThemeManager.ApplyTheme(this, resolved);
+            HeaderEraText.Text = $"v{detectedMajorVersion} / {currentEra}";
+            CompatEraText.Text = $"{currentEra} Era Styling";
+        }
+    }
+
+    #endregion
+
+    #region Badge Generator Feature
 
     private void UseSelectedButton_Click(object sender, RoutedEventArgs e)
     {
@@ -231,36 +349,6 @@ public sealed partial class CorelMatePanel : UserControl
         CurvesResultText.Text = "Select artwork in CorelDRAW and click Convert.";
         StatusText.Text = "Select a master badge template in CorelDRAW to begin.";
         ClearMasterState();
-    }
-
-    private void ConvertCurvesButton_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (curvesConverter == null) throw new InvalidOperationException("CorelDRAW is not connected.");
-            var preflight = curvesConverter.PreflightSelection();
-            if (preflight.Summary.ConvertibleTextObjects == 0)
-            {
-                CurvesResultText.Text = "No convertible text objects found in selected artwork.";
-                if (preflight.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + preflight.Summary.SkippedTextObjects + " text object(s) skipped).";
-                return;
-            }
-
-            var confirmation = MessageBox.Show(
-                "Convert " + preflight.Summary.ConvertibleTextObjects + " text object(s) to curves?\r\n\r\nNote: Text will no longer be editable as text.",
-                "CorelMate: Convert Text to Curves",
-                MessageBoxButton.OKCancel,
-                MessageBoxImage.Question);
-            if (confirmation != MessageBoxResult.OK) return;
-
-            var result = curvesConverter.Convert(preflight);
-            CurvesResultText.Text = "✓ " + result.ConvertedTextObjects + " text object(s) successfully converted to curves.";
-            if (result.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + result.Summary.SkippedTextObjects + " skipped).";
-        }
-        catch (Exception exception)
-        {
-            CurvesResultText.Text = exception is InvalidOperationException ? exception.Message : "CorelDRAW could not complete the text conversion. Verify the selected artwork is still available.";
-        }
     }
 
     private List<BadgeDataRow> ParseRows()
@@ -491,6 +579,44 @@ public sealed partial class CorelMatePanel : UserControl
         PreviewDetailText.Text = master == null ? "Capture a master to preview the layout plan." : "Preview unavailable until the layout and rows are valid.";
     }
 
+    #endregion
+
+    #region Convert Text To Curves Feature
+
+    private void ConvertCurvesButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (curvesConverter == null) throw new InvalidOperationException("CorelDRAW is not connected.");
+            var preflight = curvesConverter.PreflightSelection();
+            if (preflight.Summary.ConvertibleTextObjects == 0)
+            {
+                CurvesResultText.Text = "No convertible text objects found in selected artwork.";
+                if (preflight.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + preflight.Summary.SkippedTextObjects + " text object(s) skipped).";
+                return;
+            }
+
+            var confirmation = MessageBox.Show(
+                "Convert " + preflight.Summary.ConvertibleTextObjects + " text object(s) to curves?\r\n\r\nNote: Text will no longer be editable as text.",
+                "CorelMate: Convert Text to Curves",
+                MessageBoxButton.OKCancel,
+                MessageBoxImage.Question);
+            if (confirmation != MessageBoxResult.OK) return;
+
+            var result = curvesConverter.Convert(preflight);
+            CurvesResultText.Text = "✓ " + result.ConvertedTextObjects + " text object(s) successfully converted to curves.";
+            if (result.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + result.Summary.SkippedTextObjects + " skipped).";
+        }
+        catch (Exception exception)
+        {
+            CurvesResultText.Text = exception is InvalidOperationException ? exception.Message : "CorelDRAW could not complete the text conversion. Verify the selected artwork is still available.";
+        }
+    }
+
+    #endregion
+
+    #region Helpers
+
     private void ShowFriendlyError(Exception exception)
     {
         var message = exception is FormatException || exception is InvalidOperationException ? exception.Message : "CorelDRAW could not complete the operation. Verify that the document and selected artwork are still available.";
@@ -509,4 +635,6 @@ public sealed partial class CorelMatePanel : UserControl
     {
         return (T)FindResource(key);
     }
+
+    #endregion
 }

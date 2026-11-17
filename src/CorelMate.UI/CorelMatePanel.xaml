@@ -2,13 +2,13 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Style="{StaticResource CorelMateRootStyle}"
-             MinWidth="300"
-             MinHeight="560">
+             MinWidth="320"
+             MinHeight="580">
   <UserControl.Resources>
     <ResourceDictionary Source="/CorelMate.UI;component/Themes/CorelMateTheme.xaml" />
   </UserControl.Resources>
 
-  <Grid Margin="12,10,12,12">
+  <Grid Margin="10,8,10,10">
     <Grid.RowDefinitions>
       <!-- Header -->
       <RowDefinition Height="Auto" />
@@ -19,22 +19,27 @@
     </Grid.RowDefinitions>
 
     <!-- App Header & Host Status -->
-    <Grid Grid.Row="0" Margin="0,0,0,10">
+    <Grid Grid.Row="0" Margin="0,0,0,8">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
 
-      <Image Grid.Column="0" Width="30" Height="30" Stretch="Uniform" Source="/CorelMate.UI;component/Assets/corelmate-logo.png" Margin="0,0,8,0" VerticalAlignment="Center" />
+      <Image Grid.Column="0" Width="28" Height="28" Stretch="Uniform" Source="/CorelMate.UI;component/Assets/corelmate-logo.png" Margin="0,0,8,0" VerticalAlignment="Center" />
 
       <StackPanel Grid.Column="1" VerticalAlignment="Center">
-        <TextBlock Text="CORELMATE" Style="{StaticResource CorelMateHeaderTitleStyle}" />
-        <TextBlock Text="Productivity Suite" Style="{StaticResource CorelMateCaptionStyle}" />
+        <StackPanel Orientation="Horizontal">
+          <TextBlock Text="CORELMATE" Style="{StaticResource CorelMateHeaderTitleStyle}" VerticalAlignment="Center" />
+          <Border Background="{DynamicResource CorelMatePillBgBrush}" BorderBrush="{DynamicResource CorelMatePillBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource CorelMatePillCornerRadius}" Padding="6,1" Margin="6,0,0,0" VerticalAlignment="Center">
+            <TextBlock x:Name="HeaderEraText" Text="v27 / 2026" FontSize="9.5" FontWeight="Bold" Foreground="{DynamicResource CorelMateAccentBrush}" />
+          </Border>
+        </StackPanel>
+        <TextBlock Text="Native CorelDRAW Productivity Suite" Style="{StaticResource CorelMateCaptionStyle}" />
       </StackPanel>
 
-      <!-- Live Connection Pill -->
-      <Border Grid.Column="2" Background="{DynamicResource CorelMateSurfaceRaisedBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="12" Padding="8,4" VerticalAlignment="Center">
+      <!-- Live Connection Status Pill -->
+      <Border Grid.Column="2" Background="{DynamicResource CorelMateSurfaceRaisedBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource CorelMatePillCornerRadius}" Padding="8,3" VerticalAlignment="Center">
         <StackPanel Orientation="Horizontal">
           <Ellipse x:Name="StatusIndicatorDot" Width="7" Height="7" Fill="{DynamicResource CorelMateSuccessBrush}" Margin="0,0,5,0" VerticalAlignment="Center" />
           <TextBlock x:Name="StatusBadgeText" Text="Connected" FontSize="10.5" FontWeight="SemiBold" Foreground="{DynamicResource CorelMateTextSecondaryBrush}" VerticalAlignment="Center" />
@@ -42,23 +47,126 @@
       </Border>
     </Grid>
 
-    <!-- Segmented Navigation Bar -->
-    <Border Grid.Row="1" Background="{DynamicResource CorelMateSurfaceBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="3" Margin="0,0,0,10">
+    <!-- Navigation Bar: Segmented Radio Buttons -->
+    <Border Grid.Row="1" Background="{DynamicResource CorelMateSurfaceBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource CorelMateButtonCornerRadius}" Padding="2" Margin="0,0,0,8">
       <UniformGrid Rows="1">
-        <RadioButton x:Name="TabBadgesRadio" Content="🏷️ Badges" Style="{StaticResource CorelMateTabButtonStyle}" IsChecked="True" Checked="TabRadio_Checked" />
+        <RadioButton x:Name="TabDashboardRadio" Content="📊 Dashboard" Style="{StaticResource CorelMateTabButtonStyle}" IsChecked="True" Checked="TabRadio_Checked" />
+        <RadioButton x:Name="TabBadgesRadio" Content="🏷️ Badges" Style="{StaticResource CorelMateTabButtonStyle}" Checked="TabRadio_Checked" />
         <RadioButton x:Name="TabCurvesRadio" Content="🔤 Curves" Style="{StaticResource CorelMateTabButtonStyle}" Checked="TabRadio_Checked" />
-        <RadioButton x:Name="TabInfoRadio" Content="⚙️ Info" Style="{StaticResource CorelMateTabButtonStyle}" Checked="TabRadio_Checked" />
+        <RadioButton x:Name="TabInspectorRadio" Content="🔍 Inspect" Style="{StaticResource CorelMateTabButtonStyle}" Checked="TabRadio_Checked" />
+        <RadioButton x:Name="TabCompatRadio" Content="⚡ Compat" Style="{StaticResource CorelMateTabButtonStyle}" Checked="TabRadio_Checked" />
+        <RadioButton x:Name="TabInfoRadio" Content="⚙️ Settings" Style="{StaticResource CorelMateTabButtonStyle}" Checked="TabRadio_Checked" />
       </UniformGrid>
     </Border>
 
     <!-- Main Scrollable Content Area -->
     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <Grid>
-        <!-- ==================== TAB 1: BADGE GENERATOR ==================== -->
-        <StackPanel x:Name="BadgesTabContent" Visibility="Visible">
+        <!-- ==================== TAB 0: DASHBOARD ==================== -->
+        <StackPanel x:Name="DashboardTabContent" Visibility="Visible">
+          <!-- Overview Card -->
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <TextBlock Text="SUITE STATUS" Style="{StaticResource CorelMateSectionTitleStyle}" />
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="6" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
+                <Border Grid.Column="0" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel>
+                    <TextBlock Text="HOST SUITE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" />
+                    <TextBlock x:Name="DashHostVersionText" Text="CorelDRAW 2026" FontSize="12.5" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel>
+                    <TextBlock Text="ARCHITECTURE" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" />
+                    <TextBlock x:Name="DashArchText" Text="64-bit (x64)" FontSize="12.5" FontWeight="Bold" Foreground="{DynamicResource CorelMateAccentBrush}" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <TextBlock x:Name="DashDocumentText" Text="Active Document: None" Style="{StaticResource CorelMateBodyStyle}" Margin="0,0,0,4" />
+              <TextBlock Text="Select a tool below or use the native CorelMate menu in CorelDRAW's top navigation bar." Style="{StaticResource CorelMateCaptionStyle}" />
+            </StackPanel>
+          </Border>
+
+          <!-- Quick Action Tiles -->
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <TextBlock Text="PRODUCTIVITY TOOLS" Style="{StaticResource CorelMateSectionTitleStyle}" />
+
+              <!-- Tool 1: Badge Generator -->
+              <Border Style="{StaticResource CorelMateMetricCardStyle}" Margin="0,0,0,6" Padding="10,8">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Text="🏷️ Batch Badge Generator" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" />
+                    <TextBlock Text="Automated ID cards, lanyards, and certificates from CSV/XLSX." Style="{StaticResource CorelMateCaptionStyle}" />
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="Open →" Style="{StaticResource CorelMateSecondaryButtonStyle}" Click="DashGoBadges_Click" VerticalAlignment="Center" />
+                </Grid>
+              </Border>
+
+              <!-- Tool 2: Text to Curves -->
+              <Border Style="{StaticResource CorelMateMetricCardStyle}" Margin="0,0,0,6" Padding="10,8">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Text="🔤 Convert Text to Curves" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" />
+                    <TextBlock Text="Preflight and convert fonts into curves with undo protection." Style="{StaticResource CorelMateCaptionStyle}" />
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="Open →" Style="{StaticResource CorelMateSecondaryButtonStyle}" Click="DashGoCurves_Click" VerticalAlignment="Center" />
+                </Grid>
+              </Border>
+
+              <!-- Tool 3: Document Inspector -->
+              <Border Style="{StaticResource CorelMateMetricCardStyle}" Margin="0,0,0,6" Padding="10,8">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Text="🔍 Document Inspector" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" />
+                    <TextBlock Text="Analyze shapes, colors, layers, and fonts across active pages." Style="{StaticResource CorelMateCaptionStyle}" />
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="Open →" Style="{StaticResource CorelMateSecondaryButtonStyle}" Click="DashGoInspector_Click" VerticalAlignment="Center" />
+                </Grid>
+              </Border>
+
+              <!-- Tool 4: Compatibility Check -->
+              <Border Style="{StaticResource CorelMateMetricCardStyle}" Padding="10,8">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Grid.Column="0">
+                    <TextBlock Text="⚡ Compatibility Diagnostics" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" />
+                    <TextBlock Text="Validate CorelDRAW versions (2017-2026) and active UI profile." Style="{StaticResource CorelMateCaptionStyle}" />
+                  </StackPanel>
+                  <Button Grid.Column="1" Content="Open →" Style="{StaticResource CorelMateSecondaryButtonStyle}" Click="DashGoCompat_Click" VerticalAlignment="Center" />
+                </Grid>
+              </Border>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ==================== TAB 1: BADGE GENERATOR ==================== -->
+        <StackPanel x:Name="BadgesTabContent" Visibility="Collapsed">
           <!-- Global Status Message Bar -->
-          <Border x:Name="StatusBanner" Background="{DynamicResource CorelMateSurfaceRaisedBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
+          <Border x:Name="StatusBanner" Background="{DynamicResource CorelMateSurfaceRaisedBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource CorelMateButtonCornerRadius}" Padding="10,8" Margin="0,0,0,8">
             <TextBlock x:Name="StatusText" Text="Select a master badge template in CorelDRAW to begin." Style="{StaticResource CorelMateBodyStyle}" Foreground="{DynamicResource CorelMateTextSecondaryBrush}" />
           </Border>
 
@@ -105,7 +213,7 @@
               </WrapPanel>
 
               <!-- Data Rows Table Area -->
-              <Border Background="{DynamicResource CorelMateSurfaceSubtleBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6" MinHeight="70" MaxHeight="220">
+              <Border Background="{DynamicResource CorelMateSurfaceSubtleBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource CorelMateButtonCornerRadius}" Padding="6" MinHeight="70" MaxHeight="220">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                   <StackPanel x:Name="RowsPanel">
                     <TextBlock x:Name="EmptyRowsHint" Text="Capture master artwork to configure data rows or import CSV/XLSX." Style="{StaticResource CorelMateCaptionStyle}" HorizontalAlignment="Center" Margin="0,16" />
@@ -131,7 +239,6 @@
                   <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Row 0: Width & Height -->
                 <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,6">
                   <TextBlock Text="Badge Width (mm)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,2" />
                   <TextBox x:Name="BadgeWidthText" Style="{StaticResource CorelMateTextBoxStyle}" TextChanged="LayoutTextChanged" />
@@ -141,7 +248,6 @@
                   <TextBox x:Name="BadgeHeightText" Style="{StaticResource CorelMateTextBoxStyle}" TextChanged="LayoutTextChanged" />
                 </StackPanel>
 
-                <!-- Row 1: Gaps -->
                 <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,6">
                   <TextBlock Text="Horizontal Gap (mm)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,2" />
                   <TextBox x:Name="HorizontalGapText" Style="{StaticResource CorelMateTextBoxStyle}" Text="3" TextChanged="LayoutTextChanged" />
@@ -151,7 +257,6 @@
                   <TextBox x:Name="VerticalGapText" Style="{StaticResource CorelMateTextBoxStyle}" Text="3" TextChanged="LayoutTextChanged" />
                 </StackPanel>
 
-                <!-- Row 2: Margins -->
                 <StackPanel Grid.Row="2" Grid.Column="0">
                   <TextBlock Text="Left / Right Margin (mm)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,2" />
                   <TextBox x:Name="HorizontalMarginText" Style="{StaticResource CorelMateTextBoxStyle}" Text="5" TextChanged="LayoutTextChanged" />
@@ -264,19 +369,170 @@
 
               <Button x:Name="ConvertCurvesButton" Content="🔤 Convert Selection to Curves" Click="ConvertCurvesButton_Click" Style="{StaticResource CorelMatePrimaryButtonStyle}" Margin="0,0,0,8" />
 
-              <Border x:Name="CurvesResultCard" Background="{DynamicResource CorelMateSurfaceSubtleBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,4,0,0">
+              <Border x:Name="CurvesResultCard" Background="{DynamicResource CorelMateSurfaceSubtleBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource CorelMateButtonCornerRadius}" Padding="10,8" Margin="0,4,0,0">
                 <TextBlock x:Name="CurvesResultText" Text="Select artwork in CorelDRAW and click Convert." Style="{StaticResource CorelMateBodyStyle}" />
               </Border>
             </StackPanel>
           </Border>
         </StackPanel>
 
-        <!-- ==================== TAB 3: SETTINGS & INFO ==================== -->
+        <!-- ==================== TAB 3: DOCUMENT INSPECTOR ==================== -->
+        <StackPanel x:Name="InspectorTabContent" Visibility="Collapsed">
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="DOCUMENT INSPECTOR" Style="{StaticResource CorelMateSectionTitleStyle}" VerticalAlignment="Center" />
+                <Button x:Name="RefreshInspectorButton" Grid.Column="1" Content="🔄 Inspect Active Doc" Click="RefreshInspectorButton_Click" Style="{StaticResource CorelMateSecondaryButtonStyle}" />
+              </Grid>
+
+              <!-- Overview Cards -->
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="6" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel>
+                    <TextBlock Text="DOCUMENT NAME" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" />
+                    <TextBlock x:Name="InspDocNameText" Text="No active document" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                  </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel>
+                    <TextBlock Text="DIMENSIONS" FontSize="9" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" />
+                    <TextBlock x:Name="InspDimensionsText" Text="-" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource CorelMateAccentBrush}" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <!-- Object Counts Breakdown Grid -->
+              <TextBlock Text="SHAPES BREAKDOWN" Style="{StaticResource CorelMateCaptionStyle}" FontWeight="SemiBold" Margin="0,4,0,4" />
+              <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="4" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="4" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="4" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Border Grid.Column="0" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="TOTAL" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="InspTotalShapesText" Text="0" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+
+                <Border Grid.Column="2" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="TEXT" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="InspTextShapesText" Text="0" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource CorelMateAccentBrush}" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+
+                <Border Grid.Column="4" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="CURVES" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="InspCurvesShapesText" Text="0" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource CorelMateInfoBrush}" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+
+                <Border Grid.Column="6" Style="{StaticResource CorelMateMetricCardStyle}">
+                  <StackPanel HorizontalAlignment="Center">
+                    <TextBlock Text="BITMAPS" FontSize="8.5" FontWeight="Bold" Foreground="{DynamicResource CorelMateTextMutedBrush}" HorizontalAlignment="Center" />
+                    <TextBlock x:Name="InspBitmapsShapesText" Text="0" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource CorelMateWarningBrush}" HorizontalAlignment="Center" />
+                  </StackPanel>
+                </Border>
+              </Grid>
+
+              <!-- Fonts Card -->
+              <TextBlock Text="FONTS IN ACTIVE PAGE" Style="{StaticResource CorelMateCaptionStyle}" FontWeight="SemiBold" Margin="0,4,0,4" />
+              <Border Background="{DynamicResource CorelMateSurfaceSubtleBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource CorelMateButtonCornerRadius}" Padding="8,6" MinHeight="50" MaxHeight="120">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                  <TextBlock x:Name="InspFontsListText" Text="Click 'Inspect Active Doc' to analyze fonts." Style="{StaticResource CorelMateBodyStyle}" />
+                </ScrollViewer>
+              </Border>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ==================== TAB 4: COMPATIBILITY & DIAGNOSTICS ==================== -->
+        <StackPanel x:Name="CompatTabContent" Visibility="Collapsed">
+          <Border Style="{StaticResource CorelMateCardStyle}">
+            <StackPanel>
+              <TextBlock Text="VERSION COMPATIBILITY REGISTRY" Style="{StaticResource CorelMateSectionTitleStyle}" />
+              <TextBlock Text="CorelMate automatically adapts its API adapters and user interface to match CorelDRAW 2017 through 2026." Style="{StaticResource CorelMateBodyStyle}" Margin="0,0,0,10" />
+
+              <!-- Diagnostics Details -->
+              <Border Style="{StaticResource CorelMateMetricCardStyle}" Padding="10,8" Margin="0,0,0,10">
+                <StackPanel>
+                  <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Detected Host:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,8,0" />
+                    <TextBlock x:Name="CompatHostText" Grid.Column="1" Text="Scanning..." Style="{StaticResource CorelMateCaptionStyle}" Foreground="{DynamicResource CorelMateTextPrimaryBrush}" />
+                  </Grid>
+
+                  <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Status:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,8,0" />
+                    <TextBlock x:Name="CompatStatusText" Grid.Column="1" Text="Evaluating..." Style="{StaticResource CorelMateCaptionStyle}" Foreground="{DynamicResource CorelMateSuccessBrush}" />
+                  </Grid>
+
+                  <Grid Margin="0,2">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="Active Era:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,8,0" />
+                    <TextBlock x:Name="CompatEraText" Grid.Column="1" Text="Adaptive Pro (2026)" Style="{StaticResource CorelMateCaptionStyle}" Foreground="{DynamicResource CorelMateAccentBrush}" />
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <!-- UI Profile / Theme Selector -->
+              <TextBlock Text="FORCE UI ERA THEME (ADAPTATION TEST)" Style="{StaticResource CorelMateCaptionStyle}" FontWeight="SemiBold" Margin="0,4,0,4" />
+              <WrapPanel Margin="0,0,0,10">
+                <Button Content="Auto (Detect)" Click="ThemeBtn_Click" Tag="Auto" Style="{StaticResource CorelMateSecondaryButtonStyle}" Margin="0,0,4,4" />
+                <Button Content="2017 (Classic)" Click="ThemeBtn_Click" Tag="Classic2017" Style="{StaticResource CorelMateSecondaryButtonStyle}" Margin="0,0,4,4" />
+                <Button Content="2019 (Charcoal)" Click="ThemeBtn_Click" Tag="Charcoal2019" Style="{StaticResource CorelMateSecondaryButtonStyle}" Margin="0,0,4,4" />
+                <Button Content="2021 (Teal)" Click="ThemeBtn_Click" Tag="Teal2021" Style="{StaticResource CorelMateSecondaryButtonStyle}" Margin="0,0,4,4" />
+                <Button Content="2023 (Azure)" Click="ThemeBtn_Click" Tag="Azure2023" Style="{StaticResource CorelMateSecondaryButtonStyle}" Margin="0,0,4,4" />
+                <Button Content="2026 (Adaptive)" Click="ThemeBtn_Click" Tag="AdaptivePro2026" Style="{StaticResource CorelMateSecondaryButtonStyle}" Margin="0,0,4,4" />
+              </WrapPanel>
+
+              <!-- Main Menu Registration Status -->
+              <TextBlock Text="NATIVE NAVIGATION INTEGRATION" Style="{StaticResource CorelMateCaptionStyle}" FontWeight="SemiBold" Margin="0,4,0,4" />
+              <Border Background="{DynamicResource CorelMateSurfaceSubtleBrush}" BorderBrush="{DynamicResource CorelMateCardBorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource CorelMateButtonCornerRadius}" Padding="10,8">
+                <StackPanel>
+                  <TextBlock Text="✓ Main Menu Bar: File | Edit | ... | Window | Help | CorelMate" Style="{StaticResource CorelMateBodyStyle}" FontWeight="SemiBold" Foreground="{DynamicResource CorelMateSuccessBrush}" Margin="0,0,0,4" />
+                  <TextBlock Text="Integrated via native Addon XSLT and companion GMS macro. Survives application restarts without replacing native CorelDRAW menus." Style="{StaticResource CorelMateCaptionStyle}" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </Border>
+        </StackPanel>
+
+        <!-- ==================== TAB 5: SETTINGS & INFO ==================== -->
         <StackPanel x:Name="SettingsTabContent" Visibility="Collapsed">
           <Border Style="{StaticResource CorelMateCardStyle}">
             <StackPanel>
               <TextBlock Text="ABOUT CORELMATE" Style="{StaticResource CorelMateSectionTitleStyle}" />
-              <TextBlock Text="CorelMate is a productivity companion for CorelDRAW Graphics Suite." Style="{StaticResource CorelMateBodyStyle}" Margin="0,0,0,8" />
+              <TextBlock Text="CorelMate is a Windows-first productivity companion for CorelDRAW Graphics Suite (2017–2026)." Style="{StaticResource CorelMateBodyStyle}" Margin="0,0,0,8" />
 
               <Grid Margin="0,4,0,8">
                 <Grid.ColumnDefinitions>
@@ -287,27 +543,31 @@
                   <RowDefinition Height="Auto" />
                   <RowDefinition Height="Auto" />
                   <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Grid.Column="0" Text="Host:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
+                <TextBlock Grid.Row="0" Grid.Column="0" Text="Host Suite:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
                 <TextBlock x:Name="HostVersionText" Grid.Row="0" Grid.Column="1" Text="CorelDRAW Graphics Suite 2026 (v27.x)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
 
                 <TextBlock Grid.Row="1" Grid.Column="0" Text="UI Surface:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="WPF Native Docker (.NET Framework 4.8)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
 
-                <TextBlock Grid.Row="2" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
-                <TextBlock Grid.Row="2" Grid.Column="1" Text="0.1.0-alpha (Adaptive Pro)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
+                <TextBlock Grid.Row="2" Grid.Column="0" Text="Navigation:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
+                <TextBlock Grid.Row="2" Grid.Column="1" Text="Main Menu Bar [CorelMate] &amp; Dockers" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Text="Version:" FontWeight="SemiBold" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,8,2" />
+                <TextBlock Grid.Row="3" Grid.Column="1" Text="0.2.0 (Version-Adaptive Release)" Style="{StaticResource CorelMateCaptionStyle}" Margin="0,2,0,2" />
               </Grid>
             </StackPanel>
           </Border>
 
           <Border Style="{StaticResource CorelMateCardStyle}">
             <StackPanel>
-              <TextBlock Text="QUICK TIPS" Style="{StaticResource CorelMateSectionTitleStyle}" />
-              <TextBlock Text="• In CorelDRAW, add dynamic text using {{NAME}}, {{TITLE}}, etc." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,4" />
-              <TextBlock Text="• CSV/XLSX spreadsheets match headers case-insensitively." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,4" />
-              <TextBlock Text="• Include a QUANTITY or QTY column in your spreadsheet." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,4" />
-              <TextBlock Text="• Batch generation automatically creates extra pages if needed." Style="{StaticResource CorelMateCaptionStyle}" />
+              <TextBlock Text="QUICK TIPS &amp; SHORTCUTS" Style="{StaticResource CorelMateSectionTitleStyle}" />
+              <TextBlock Text="• Add dynamic text in CorelDRAW using {{NAME}}, {{TITLE}}, etc." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,4" />
+              <TextBlock Text="• CSV/XLSX spreadsheets match template headers case-insensitively." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,4" />
+              <TextBlock Text="• Text to Curves skips locked &amp; hidden objects safely." Style="{StaticResource CorelMateCaptionStyle}" Margin="0,0,0,4" />
+              <TextBlock Text="• Document Inspector shows total shapes, color model, and fonts." Style="{StaticResource CorelMateCaptionStyle}" />
             </StackPanel>
           </Border>
         </StackPanel>
