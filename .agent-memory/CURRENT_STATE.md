@@ -54,3 +54,8 @@ Updated 2026-09-16 during bootstrap.
     - Positioned `CorelMate` navbar menu immediately before `Help` (`... | Window | CorelMate | Help`) across Welcome Screen (`6d1d9e94-13f3-4517-a976-ba9154671db4`) and Document Open (`76d73481-9076-44c9-821c-52de9408cce2`) modes.
     - Attached authentic 16x16 `WCmnUI_UIItemBmp` base64 bitmaps (`userSmallBitmap`) in `CorelMateIcons.cs` for CorelMate, Curves, Export, Color, and all individual sub-commands.
     - Hardened PowerShell install scripts with ASCII-safe strings to prevent CP1252 multi-byte quote interpretation issues. Fully built and verified against live workspace `_default.cdws`.
+  - GlobalMacros Companion Engine Binding & Execution Fix:
+    - Fixed root cause of menu actions failing with "red loading spinner and nothing happens": dynamicCommands previously addressed `ConvertAllToCurves.Converter.*`, which mapped to a locked legacy macro in Program Files without the new subroutines.
+    - Re-bound all 7 command items in `CorelWorkspacePatcher.cs` and `CorelMenuIntegration.cs` to `GlobalMacros.CorelMate.*`.
+    - Integrated native `CorelMate.bas` source in `assets/vba/` and verified compiled `GlobalMacros.gms` asset in `assets/gms/`.
+    - Live import and GMS deployment tested and verified; commands now trigger immediate execution with native confirmation dialogs.

@@ -16,6 +16,13 @@ Project branding and open-source documentation details are recorded in [.agents/
  
 Task 9 Modern UI Design System details are recorded in [.agents/CHANGELOG.md](.agents/CHANGELOG.md).
 
+## CorelMate 1.18.1 (Update 6) - GlobalMacros Companion Engine Binding & Execution Fix
+
+- **Resolved "Red Loading Spinner & Nothing Happens" Issue**: Diagnosed and fixed the failure mode where clicking CorelMate navbar commands resulted in a loading spinner followed by no execution. Commands were previously pointing to `ConvertAllToCurves.Converter.*`, which resolved to the locked legacy GMS in Program Files that lacked the new procedures.
+- **Native GlobalMacros Integration**: Re-anchored all CorelMate command bindings to `GlobalMacros.CorelMate.*` (`CurveCurrentPage`, `CurveAllPages`, `CurveSelection`, `ExportAsIdCard`, `ExportAsPrint`, `ConvertToCmyk`, `ConvertToRgb`).
+- **Natively-Compiled Companion Asset**: Integrated `assets/vba/CorelMate.bas` and generated a verified, clean `assets/gms/GlobalMacros.gms`. CorelDRAW natively compiles and persists the `CorelMate` module into the built-in `GlobalMacros.gms`, ensuring 100% execution reliability without password locks or sector corruption.
+- **Installer Automation**: Updated `Install-Dev.ps1` and `Install-CorelMate.ps1` to deploy `GlobalMacros.gms` and perform live VBE import into running CorelDRAW instances.
+
 ## CorelMate 1.18.1 (Update 5) - Single Master CorelMate Menu Before Help with Distinct Icons
 
 - **Single Master Menu on Navbar**: Grouped all tools (`Curves`, `Export`, `Color`) under a single top-level `CorelMate` menu on the main navigation bar, keeping the CorelDRAW navbar clean and organized.

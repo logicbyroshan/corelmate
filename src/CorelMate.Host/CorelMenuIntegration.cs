@@ -91,17 +91,17 @@ public static class CorelMenuIntegration
         </itemData>
       </xsl:if>
       <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-cpage-3a15c783d5d1'])"">
-        <itemData guid=""a63f9c4c-cmd-cpage-3a15c783d5d1"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.CurveCurrentPage"" userCaption=""Curve Current Page"" userToolTip=""Convert all text on current page to curves"">
+        <itemData guid=""a63f9c4c-cmd-cpage-3a15c783d5d1"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""GlobalMacros.CorelMate.CurveCurrentPage"" userCaption=""Curve Current Page"" userToolTip=""Convert all text on current page to curves"">
           <userSmallBitmap xmlns:dt=""urn:schemas-microsoft-com:datatypes"" dt:dt=""bin.base64"">" + CorelMateIcons.CurveCurrentPage + @"</userSmallBitmap>
         </itemData>
       </xsl:if>
       <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-callp-3a15c783d5d2'])"">
-        <itemData guid=""a63f9c4c-cmd-callp-3a15c783d5d2"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.CurveAllPages"" userCaption=""Curve All Pages"" userToolTip=""Convert all text across all pages to curves"">
+        <itemData guid=""a63f9c4c-cmd-callp-3a15c783d5d2"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""GlobalMacros.CorelMate.CurveAllPages"" userCaption=""Curve All Pages"" userToolTip=""Convert all text across all pages to curves"">
           <userSmallBitmap xmlns:dt=""urn:schemas-microsoft-com:datatypes"" dt:dt=""bin.base64"">" + CorelMateIcons.CurveAllPages + @"</userSmallBitmap>
         </itemData>
       </xsl:if>
       <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-csele-3a15c783d5d3'])"">
-        <itemData guid=""a63f9c4c-cmd-csele-3a15c783d5d3"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.CurveSelection"" userCaption=""Curve Selected Objects"" userToolTip=""Convert selected text objects to curves"">
+        <itemData guid=""a63f9c4c-cmd-csele-3a15c783d5d3"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""GlobalMacros.CorelMate.CurveSelection"" userCaption=""Curve Selected Objects"" userToolTip=""Convert selected text objects to curves"">
           <userSmallBitmap xmlns:dt=""urn:schemas-microsoft-com:datatypes"" dt:dt=""bin.base64"">" + CorelMateIcons.CurveSelection + @"</userSmallBitmap>
         </itemData>
       </xsl:if>
@@ -113,12 +113,12 @@ public static class CorelMenuIntegration
         </itemData>
       </xsl:if>
       <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-eidcd-3a15c783d5d4'])"">
-        <itemData guid=""a63f9c4c-cmd-eidcd-3a15c783d5d4"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.ExportAsIdCard"" userCaption=""Export As ID Card"" userToolTip=""Export ID card metadata (JSON) and editable vector PDF template"">
+        <itemData guid=""a63f9c4c-cmd-eidcd-3a15c783d5d4"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""GlobalMacros.CorelMate.ExportAsIdCard"" userCaption=""Export As ID Card"" userToolTip=""Export ID card metadata (JSON) and editable vector PDF template"">
           <userSmallBitmap xmlns:dt=""urn:schemas-microsoft-com:datatypes"" dt:dt=""bin.base64"">" + CorelMateIcons.ExportIdCard + @"</userSmallBitmap>
         </itemData>
       </xsl:if>
       <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-eprnt-3a15c783d5d5'])"">
-        <itemData guid=""a63f9c4c-cmd-eprnt-3a15c783d5d5"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.ExportAsPrint"" userCaption=""Export As Print"" userToolTip=""Export print-ready CMYK PDF with text curved"">
+        <itemData guid=""a63f9c4c-cmd-eprnt-3a15c783d5d5"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""GlobalMacros.CorelMate.ExportAsPrint"" userCaption=""Export As Print"" userToolTip=""Export print-ready CMYK PDF with text curved"">
           <userSmallBitmap xmlns:dt=""urn:schemas-microsoft-com:datatypes"" dt:dt=""bin.base64"">" + CorelMateIcons.ExportPrint + @"</userSmallBitmap>
         </itemData>
       </xsl:if>
@@ -130,12 +130,12 @@ public static class CorelMenuIntegration
         </itemData>
       </xsl:if>
       <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-ccmyk-3a15c783d5d6'])"">
-        <itemData guid=""a63f9c4c-cmd-ccmyk-3a15c783d5d6"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.ConvertToCmyk"" userCaption=""Convert to CMYK"" userToolTip=""Convert all vector colors and bitmap images to CMYK"">
+        <itemData guid=""a63f9c4c-cmd-ccmyk-3a15c783d5d6"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""GlobalMacros.CorelMate.ConvertToCmyk"" userCaption=""Convert to CMYK"" userToolTip=""Convert all vector colors and bitmap images to CMYK"">
           <userSmallBitmap xmlns:dt=""urn:schemas-microsoft-com:datatypes"" dt:dt=""bin.base64"">" + CorelMateIcons.ConvertCmyk + @"</userSmallBitmap>
         </itemData>
       </xsl:if>
       <xsl:if test=""not(./itemData[@guid='a63f9c4c-cmd-crgbb-3a15c783d5d7'])"">
-        <itemData guid=""a63f9c4c-cmd-crgbb-3a15c783d5d7"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""ConvertAllToCurves.Converter.ConvertToRgb"" userCaption=""Convert to RGB"" userToolTip=""Convert all vector colors and bitmap images to RGB"">
+        <itemData guid=""a63f9c4c-cmd-crgbb-3a15c783d5d7"" type=""button"" dynamicCategory=""2cc24a3e-fe24-4708-9a74-9c75406eebcd"" dynamicCommand=""GlobalMacros.CorelMate.ConvertToRgb"" userCaption=""Convert to RGB"" userToolTip=""Convert all vector colors and bitmap images to RGB"">
           <userSmallBitmap xmlns:dt=""urn:schemas-microsoft-com:datatypes"" dt:dt=""bin.base64"">" + CorelMateIcons.ConvertRgb + @"</userSmallBitmap>
         </itemData>
       </xsl:if>

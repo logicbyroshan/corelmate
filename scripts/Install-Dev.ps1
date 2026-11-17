@@ -68,18 +68,45 @@ if ($TargetVersion) {
 
 Write-Host "Targeting CorelDRAW v$($selected.Major) at '$($selected.ProgramsDir)'" -ForegroundColor Green
 
-# 1. Build and deploy binary GMS macros
-Write-Host "Compiling and deploying native GMS binary companion macros..." -ForegroundColor Cyan
-$buildGmsScript = Join-Path $root "scripts\Build-Gms.py"
-python $buildGmsScript
-if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Python GMS builder failed. Copying pre-built assets/gms/*.gms..."
-    $appData = [Environment]::GetFolderPath([Environment+SpecialFolder]::ApplicationData)
-    $gmsDirs = Get-ChildItem -Path (Join-Path $appData "Corel") -Filter "GMS" -Recurse -Depth 4 -ErrorAction SilentlyContinue
-    foreach ($gDir in $gmsDirs) {
-        Copy-Item -Path (Join-Path $root "assets\gms\*.gms") -Destination $gDir.FullName -Force
+# 1. Deploy GlobalMacros.gms and import CorelMate.bas into active CorelDRAW VBA
+Write-Host "Deploying CorelMate native companion macros into GlobalMacros..." -ForegroundColor Cyan
+$appData = [Environment]::GetFolderPath([Environment+SpecialFolder]::ApplicationData)
+
+# Copy pre-compiled GlobalMacros.gms asset
+$srcGlobalMacros = Join-Path $root "assets\gms\GlobalMacros.gms"
+if (Test-Path $srcGlobalMacros) {
+    $drawRoots = Get-ChildItem -Path (Join-Path $appData "Corel") -Filter "Draw" -Recurse -Depth 4 -ErrorAction SilentlyContinue
+    foreach ($dRoot in $drawRoots) {
+        try {
+            $destGm = Join-Path $dRoot.FullName "GlobalMacros.gms"
+            Copy-Item -Path $srcGlobalMacros -Destination $destGm -Force
+            Write-Host "  [OK] Deployed GlobalMacros.gms to: $destGm" -ForegroundColor Green
+        } catch {}
     }
 }
+
+# Live VBA import if CorelDRAW is running
+try {
+    $type = [Type]::GetTypeFromProgID("CorelDRAW.Application")
+    $app = [Activator]::CreateInstance($type)
+    $app.InitializeVBA()
+    $basFile = Join-Path $root "assets\vba\CorelMate.bas"
+    if (Test-Path $basFile) {
+        foreach ($vp in $app.VBE.VBProjects) {
+            if ($vp.Name -eq "GlobalMacros") {
+                foreach ($c in $vp.VBComponents) {
+                    if ($c.Name -eq "CorelMate") {
+                        $vp.VBComponents.Remove($c)
+                        break
+                    }
+                }
+                $vp.VBComponents.Import($basFile) | Out-Null
+                Write-Host "  [OK] Live CorelMate VBA module imported into active GlobalMacros project" -ForegroundColor Green
+                break
+            }
+        }
+    }
+} catch {}
 
 # 2. Patch active user workspaces (.cdws) to remove Docker and add 3 Navbar menus
 Write-Host "Patching CorelDRAW workspaces (removing Docker, adding direct Navbar menus)..." -ForegroundColor Cyan
