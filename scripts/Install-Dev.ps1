@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$Configuration = 'Release',
     [string]$TargetVersion = ''
 )
@@ -101,7 +101,7 @@ foreach ($dRoot in $userAddonRoots) {
         if (-not (Test-Path $uAddon)) { New-Item -ItemType Directory -Path $uAddon -Force | Out-Null }
         [System.IO.File]::WriteAllBytes((Join-Path $uAddon "Coreldrw.addon"), @())
         [System.IO.File]::WriteAllText((Join-Path $uAddon "UserDraw.xslt"), $xsltContent, [System.Text.Encoding]::UTF8)
-        Write-Host "✓ CorelMate Addon deployed to User AppData: $uAddon" -ForegroundColor Green
+        Write-Host "  [OK] CorelMate Addon deployed to User AppData: $uAddon" -ForegroundColor Green
     } catch {}
 }
 
@@ -113,7 +113,7 @@ try {
     if (-not (Test-Path $marker)) { [System.IO.File]::WriteAllBytes($marker, @()) }
     $xslt = Join-Path $addonDir "UserDraw.xslt"
     [System.IO.File]::WriteAllText($xslt, $xsltContent, [System.Text.Encoding]::UTF8)
-    Write-Host "✓ CorelMate Addon deployed to Programs: $addonDir" -ForegroundColor Green
+    Write-Host "  [OK] CorelMate Addon deployed to Programs: $addonDir" -ForegroundColor Green
 } catch {}
 
 # 4. Hide/Remove Docker if CorelDRAW is running
@@ -125,15 +125,16 @@ try {
             $app.FrameWork.HideDocker($dockerGuid)
         }
         $app.FrameWork.RemoveDocker($dockerGuid)
-        Write-Host "✓ CorelMate Docker closed and removed from active CorelDRAW instance." -ForegroundColor Green
+        Write-Host "  [OK] CorelMate Docker closed and removed from active CorelDRAW instance." -ForegroundColor Green
     }
 } catch {
     # CorelDRAW not currently running; workspace and addon changes take effect on launch
 }
 
 Write-Host "`n=== Installation Complete! ===" -ForegroundColor Green
-Write-Host "CorelMate direct Navbar menus installed:" -ForegroundColor Cyan
-Write-Host "  1. CorelMate Curves: Curve Current Page | Curve All Pages | Curve Selected Objects" -ForegroundColor White
-Write-Host "  2. CorelMate Export: Export As ID Card | Export As Print" -ForegroundColor White
-Write-Host "  3. CorelMate Color:  Convert to CMYK | Convert to RGB" -ForegroundColor White
+Write-Host "CorelMate single Navbar menu installed before Help:" -ForegroundColor Cyan
+Write-Host "  CorelMate (Navbar immediately before Help)" -ForegroundColor White
+Write-Host "    -> Curves: Curve Current Page | Curve All Pages | Curve Selected Objects" -ForegroundColor White
+Write-Host "    -> Export: Export As ID Card | Export As Print" -ForegroundColor White
+Write-Host "    -> Color:  Convert to CMYK | Convert to RGB" -ForegroundColor White
 Write-Host "  (All operations execute directly with confirmation dialogs; Docker is completely removed)`n" -ForegroundColor Gray
