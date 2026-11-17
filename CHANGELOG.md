@@ -16,6 +16,18 @@ Project branding and open-source documentation details are recorded in [.agents/
  
 Task 9 Modern UI Design System details are recorded in [.agents/CHANGELOG.md](.agents/CHANGELOG.md).
 
+## CorelMate 1.18.1 (Update 5) - Single Master CorelMate Menu Before Help with Distinct Icons
+
+- **Single Master Menu on Navbar**: Grouped all tools (`Curves`, `Export`, `Color`) under a single top-level `CorelMate` menu on the main navigation bar, keeping the CorelDRAW navbar clean and organized.
+- **Menu Placement Before Help**: Positioned `CorelMate` immediately before the `Help` menu item (`... | Tools | Window | CorelMate | Help`) in both Welcome Screen (`6d1d9e94-13f3-4517-a976-ba9154671db4`) and Document Open (`76d73481-9076-44c9-821c-52de9408cce2`) menubar modes.
+- **Distinct Authentic Feature Icons**: Attached native 16x16 `WCmnUI_UIItemBmp` base64 bitmaps (`userSmallBitmap`) across all menus and sub-commands:
+  - `CorelMate` (Brand vector icon)
+  - `Curves` flyout, `Curve Current Page`, `Curve All Pages`, and `Curve Selected Objects` (Vector curve node & pen icons)
+  - `Export` flyout, `Export As ID Card`, and `Export As Print` (Document, badge card, and printer export icons)
+  - `Color` flyout, `Convert to CMYK`, and `Convert to RGB` (Color palette, CMYK ink separation, and RGB channel icons)
+- **Zero Docker Mode Preserved**: Operates without opening or displaying any Docker panel; every command executes directly with explicit native confirmation dialogs.
+- **Installer Script Encoding Hardened**: Standardized all PowerShell installation scripts (`Install-Dev.ps1`, `Install-CorelMate.ps1`) to ASCII-compatible output formatting, eliminating CP1252 multibyte quote parser errors.
+
 ## CorelMate 1.18.1 (Update 4) - Direct Navbar Tools (Curves, Export, Color) with Zero Docker
 
 - **Zero Docker Mode**: Removed Docker panel requirements completely. No Docker window is opened, docked, or shown. Operations execute directly within native CorelDRAW UI with standard native message dialogs.

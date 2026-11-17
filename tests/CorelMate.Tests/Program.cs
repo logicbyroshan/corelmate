@@ -168,8 +168,8 @@ try
 	<commandBars>
 		<commandBarData guid=""f3016f3c-2847-4557-b61a-a2d05319cf18"">
 			<menubar>
-				<modeData guid=""6d1d9e94-13f3-4517-a976-ba9154671db4""><item guidRef=""7aa80134-8e64-42d1-be0a-c7ec7f6c441f"" /></modeData>
-				<modeData guid=""76d73481-9076-44c9-821c-52de9408cce2""><item guidRef=""7aa80134-8e64-42d1-be0a-c7ec7f6c441f"" /></modeData>
+				<modeData guid=""6d1d9e94-13f3-4517-a976-ba9154671db4""><item guidRef=""7aa80134-8e64-42d1-be0a-c7ec7f6c441f"" /><item guidRef=""71f8ffd6-46bd-43a3-8256-5412bc2d7741"" /></modeData>
+				<modeData guid=""76d73481-9076-44c9-821c-52de9408cce2""><item guidRef=""7aa80134-8e64-42d1-be0a-c7ec7f6c441f"" /><item guidRef=""71f8ffd6-46bd-43a3-8256-5412bc2d7741"" /></modeData>
 			</menubar>
 		</commandBarData>
 	</commandBars>
@@ -185,19 +185,33 @@ try
 	var dNode = wsXmlDoc.SelectSingleNode($"//dockers/dockerData[@guid='{CorelWorkspacePatcher.DockerGuid}']") as System.Xml.XmlElement;
 	if (dNode != null) throw new InvalidOperationException("Workspace dockerData should be removed for zero-docker mode.");
 
-	var menubarCurves = wsXmlDoc.SelectSingleNode($"//commandBarData[@guid='{CorelWorkspacePatcher.MenuBarGuid}']/menubar/modeData[@guid='{CorelWorkspacePatcher.ModeDocOpenGuid}']/item[@guidRef='{CorelWorkspacePatcher.FlyoutCurvesGuid}']");
-	if (menubarCurves == null) throw new InvalidOperationException("Workspace menubar Curves flyout item patch failed.");
+	var menubarMaster = wsXmlDoc.SelectSingleNode($"//commandBarData[@guid='{CorelWorkspacePatcher.MenuBarGuid}']/menubar/modeData[@guid='{CorelWorkspacePatcher.ModeDocOpenGuid}']/item[@guidRef='{CorelWorkspacePatcher.CorelMateMenuFlyoutGuid}']") as System.Xml.XmlElement;
+	if (menubarMaster == null) throw new InvalidOperationException("Workspace menubar CorelMate master flyout item patch failed.");
 
-	var menubarExport = wsXmlDoc.SelectSingleNode($"//commandBarData[@guid='{CorelWorkspacePatcher.MenuBarGuid}']/menubar/modeData[@guid='{CorelWorkspacePatcher.ModeDocOpenGuid}']/item[@guidRef='{CorelWorkspacePatcher.FlyoutExportGuid}']");
-	if (menubarExport == null) throw new InvalidOperationException("Workspace menubar Export flyout item patch failed.");
+	// Verify CorelMate is placed BEFORE Help
+	var nextSibling = menubarMaster.NextSibling as System.Xml.XmlElement;
+	if (nextSibling == null || nextSibling.GetAttribute("guidRef") != CorelWorkspacePatcher.HelpItemGuid)
+	{
+		throw new InvalidOperationException("CorelMate master menu item must be placed immediately before Help.");
+	}
 
-	var menubarColor = wsXmlDoc.SelectSingleNode($"//commandBarData[@guid='{CorelWorkspacePatcher.MenuBarGuid}']/menubar/modeData[@guid='{CorelWorkspacePatcher.ModeDocOpenGuid}']/item[@guidRef='{CorelWorkspacePatcher.FlyoutColorGuid}']");
-	if (menubarColor == null) throw new InvalidOperationException("Workspace menubar Color flyout item patch failed.");
+	// Verify master command bar contains the 3 sub-flyouts
+	var masterCb = wsXmlDoc.SelectSingleNode($"//commandBars/commandBarData[@guid='{CorelWorkspacePatcher.CorelMateCommandBarGuid}']/menu");
+	if (masterCb == null || masterCb.ChildNodes.Count != 3)
+	{
+		throw new InvalidOperationException("Master CorelMate command bar must contain the 3 sub-flyouts (Curves, Export, Color).");
+	}
 
 	var cmdItem = wsXmlDoc.SelectSingleNode($"//items/itemData[@guid='{CorelWorkspacePatcher.CmdCurveCurrentPageGuid}']") as System.Xml.XmlElement;
 	if (cmdItem == null || cmdItem.GetAttribute("dynamicCommand") != "ConvertAllToCurves.Converter.CurveCurrentPage")
 	{
 		throw new InvalidOperationException("Workspace dynamic macro command item patch failed.");
+	}
+
+	var bmpNode = cmdItem.SelectSingleNode("userSmallBitmap") as System.Xml.XmlElement;
+	if (bmpNode == null || string.IsNullOrWhiteSpace(bmpNode.InnerText))
+	{
+		throw new InvalidOperationException("Item icon userSmallBitmap was not attached.");
 	}
 
 	// 10. Workspace Archive .cdws In-Place Patch Test
@@ -218,9 +232,7 @@ try
 		if (entry == null) throw new InvalidOperationException("Patched archive missing content/workspace.xml");
 		using var reader = new StreamReader(entry.Open(), Encoding.UTF8);
 		var patchedContent = reader.ReadToEnd();
-		if (!patchedContent.Contains(CorelWorkspacePatcher.FlyoutCurvesGuid) ||
-		    !patchedContent.Contains(CorelWorkspacePatcher.FlyoutExportGuid) ||
-		    !patchedContent.Contains(CorelWorkspacePatcher.FlyoutColorGuid))
+		if (!patchedContent.Contains(CorelWorkspacePatcher.CorelMateMenuFlyoutGuid))
 		{
 			throw new InvalidOperationException("Patched archive content verification failed.");
 		}

@@ -49,3 +49,8 @@ Updated 2026-09-16 during bootstrap.
     - Every action requests explicit user confirmation (`MsgBox` Yes/No) prior to execution.
     - Implemented native MS-OVBA binary compressor in `scripts/Build-Gms.py` deploying spec-compliant `.gms` files to user profile and repository assets.
     - Automated workspace patching in `CorelWorkspacePatcher.cs` and deployed cleanly via `Install-Dev.ps1` and `Install-CorelMate.ps1`. All unit and smoke tests passing.
+  - Single Menu Before Help with Distinct Feature Icons:
+    - Grouped all tools (`Curves`, `Export`, `Color`) under a single master top-level `CorelMate` navbar menu instead of three separate top menus.
+    - Positioned `CorelMate` navbar menu immediately before `Help` (`... | Window | CorelMate | Help`) across Welcome Screen (`6d1d9e94-13f3-4517-a976-ba9154671db4`) and Document Open (`76d73481-9076-44c9-821c-52de9408cce2`) modes.
+    - Attached authentic 16x16 `WCmnUI_UIItemBmp` base64 bitmaps (`userSmallBitmap`) in `CorelMateIcons.cs` for CorelMate, Curves, Export, Color, and all individual sub-commands.
+    - Hardened PowerShell install scripts with ASCII-safe strings to prevent CP1252 multi-byte quote interpretation issues. Fully built and verified against live workspace `_default.cdws`.

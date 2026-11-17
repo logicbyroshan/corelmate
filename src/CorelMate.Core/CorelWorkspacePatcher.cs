@@ -51,6 +51,7 @@ public static class CorelWorkspacePatcher
     // CorelDRAW Workspace Menubar & DockHost GUIDs
     public const string ModeWelcomeGuid = "6d1d9e94-13f3-4517-a976-ba9154671db4";
     public const string ModeDocOpenGuid = "76d73481-9076-44c9-821c-52de9408cce2";
+    public const string HelpItemGuid    = "71f8ffd6-46bd-43a3-8256-5412bc2d7741";
     public const string WindowMenuModeGuid = "6c91d5ab-d648-4364-96fb-3e71bcfaf70d";
     public const string RightDockTrayGuid = "bf2668a0-d25d-4eb8-97c6-c0f9fe6e7516";
     public const string SeparatorItemGuid = "266435b4-6e53-460f-9fa7-f45be187d400";
@@ -83,7 +84,6 @@ public static class CorelWorkspacePatcher
             string[] legacyItemGuids = {
                 DockerHostedItemGuid,
                 ItemShowDockerGuid,
-                CorelMateMenuFlyoutGuid,
                 "a63f9c4c-item-page-9ac9-3a15c783d5d1",
                 "a63f9c4c-item-pall-9ac9-3a15c783d5d2",
                 "a63f9c4c-item-psel-9ac9-3a15c783d5d3",
@@ -97,112 +97,101 @@ public static class CorelWorkspacePatcher
                 oldNode?.ParentNode?.RemoveChild(oldNode);
             }
 
-            // --- FEATURE 1: CURVES ---
-            EnsureItemData(itemsNode, FlyoutCurvesGuid, new Dictionary<string, string>
-            {
-                ["type"] = "flyout",
-                ["flyoutBarRef"] = CBarCurvesGuid,
-                ["userCaption"] = "CorelMate Curves",
-                ["userToolTip"] = "Text-to-Curves Operations",
-                ["userCreated"] = "true",
-                ["noBmpOnMenu"] = "true"
-            });
-            EnsureItemData(itemsNode, CmdCurveCurrentPageGuid, new Dictionary<string, string>
-            {
-                ["type"] = "button",
-                ["dynamicCommand"] = "ConvertAllToCurves.Converter.CurveCurrentPage",
-                ["dynamicCategory"] = MacroCategoryGuid,
-                ["userCaption"] = "Curve Current Page",
-                ["userToolTip"] = "Convert all text on current page to curves",
-                ["noBmpOnMenu"] = "true"
-            });
-            EnsureItemData(itemsNode, CmdCurveAllPagesGuid, new Dictionary<string, string>
-            {
-                ["type"] = "button",
-                ["dynamicCommand"] = "ConvertAllToCurves.Converter.CurveAllPages",
-                ["dynamicCategory"] = MacroCategoryGuid,
-                ["userCaption"] = "Curve All Pages",
-                ["userToolTip"] = "Convert all text across all pages to curves",
-                ["noBmpOnMenu"] = "true"
-            });
-            EnsureItemData(itemsNode, CmdCurveSelectionGuid, new Dictionary<string, string>
-            {
-                ["type"] = "button",
-                ["dynamicCommand"] = "ConvertAllToCurves.Converter.CurveSelection",
-                ["dynamicCategory"] = MacroCategoryGuid,
-                ["userCaption"] = "Curve Selected Objects",
-                ["userToolTip"] = "Convert selected text objects to curves",
-                ["noBmpOnMenu"] = "true"
-            });
-
-            // --- FEATURE 2: EXPORT ---
-            EnsureItemData(itemsNode, FlyoutExportGuid, new Dictionary<string, string>
-            {
-                ["type"] = "flyout",
-                ["flyoutBarRef"] = CBarExportGuid,
-                ["userCaption"] = "CorelMate Export",
-                ["userToolTip"] = "Export as ID Card or Print PDF",
-                ["userCreated"] = "true",
-                ["noBmpOnMenu"] = "true"
-            });
-            EnsureItemData(itemsNode, CmdExportIdCardGuid, new Dictionary<string, string>
-            {
-                ["type"] = "button",
-                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ExportAsIdCard",
-                ["dynamicCategory"] = MacroCategoryGuid,
-                ["userCaption"] = "Export As ID Card",
-                ["userToolTip"] = "Export ID card template metadata (JSON) and editable vector PDF",
-                ["noBmpOnMenu"] = "true"
-            });
-            EnsureItemData(itemsNode, CmdExportPrintGuid, new Dictionary<string, string>
-            {
-                ["type"] = "button",
-                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ExportAsPrint",
-                ["dynamicCategory"] = MacroCategoryGuid,
-                ["userCaption"] = "Export As Print",
-                ["userToolTip"] = "Export print-ready CMYK PDF with text curved",
-                ["noBmpOnMenu"] = "true"
-            });
-
-            // --- FEATURE 3: COLOR ---
-            EnsureItemData(itemsNode, FlyoutColorGuid, new Dictionary<string, string>
-            {
-                ["type"] = "flyout",
-                ["flyoutBarRef"] = CBarColorGuid,
-                ["userCaption"] = "CorelMate Color",
-                ["userToolTip"] = "Convert colors and bitmaps to CMYK or RGB",
-                ["userCreated"] = "true",
-                ["noBmpOnMenu"] = "true"
-            });
-            EnsureItemData(itemsNode, CmdColorCmykGuid, new Dictionary<string, string>
-            {
-                ["type"] = "button",
-                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ConvertToCmyk",
-                ["dynamicCategory"] = MacroCategoryGuid,
-                ["userCaption"] = "Convert to CMYK",
-                ["userToolTip"] = "Convert all vector colors and bitmap images to CMYK",
-                ["noBmpOnMenu"] = "true"
-            });
-            EnsureItemData(itemsNode, CmdColorRgbGuid, new Dictionary<string, string>
-            {
-                ["type"] = "button",
-                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ConvertToRgb",
-                ["dynamicCategory"] = MacroCategoryGuid,
-                ["userCaption"] = "Convert to RGB",
-                ["userToolTip"] = "Convert all vector colors and bitmap images to RGB",
-                ["noBmpOnMenu"] = "true"
-            });
-
-            // Master CorelMate flyout item
+            // Master CorelMate flyout item (on Main Navbar)
             EnsureItemData(itemsNode, CorelMateMenuFlyoutGuid, new Dictionary<string, string>
             {
                 ["type"] = "flyout",
                 ["flyoutBarRef"] = CorelMateCommandBarGuid,
                 ["userCaption"] = "CorelMate",
                 ["userToolTip"] = "CorelMate Productivity Suite",
-                ["userCreated"] = "true",
-                ["noBmpOnMenu"] = "true"
-            });
+                ["userCreated"] = "true"
+            }, CorelMateIcons.CorelMate);
+
+            // --- FEATURE 1: CURVES ---
+            EnsureItemData(itemsNode, FlyoutCurvesGuid, new Dictionary<string, string>
+            {
+                ["type"] = "flyout",
+                ["flyoutBarRef"] = CBarCurvesGuid,
+                ["userCaption"] = "Curves",
+                ["userToolTip"] = "Text-to-Curves Operations",
+                ["userCreated"] = "true"
+            }, CorelMateIcons.Curves);
+            EnsureItemData(itemsNode, CmdCurveCurrentPageGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.CurveCurrentPage",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Curve Current Page",
+                ["userToolTip"] = "Convert all text on current page to curves"
+            }, CorelMateIcons.CurveCurrentPage);
+            EnsureItemData(itemsNode, CmdCurveAllPagesGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.CurveAllPages",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Curve All Pages",
+                ["userToolTip"] = "Convert all text across all pages to curves"
+            }, CorelMateIcons.CurveAllPages);
+            EnsureItemData(itemsNode, CmdCurveSelectionGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.CurveSelection",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Curve Selected Objects",
+                ["userToolTip"] = "Convert selected text objects to curves"
+            }, CorelMateIcons.CurveSelection);
+
+            // --- FEATURE 2: EXPORT ---
+            EnsureItemData(itemsNode, FlyoutExportGuid, new Dictionary<string, string>
+            {
+                ["type"] = "flyout",
+                ["flyoutBarRef"] = CBarExportGuid,
+                ["userCaption"] = "Export",
+                ["userToolTip"] = "Export as ID Card or Print PDF",
+                ["userCreated"] = "true"
+            }, CorelMateIcons.Export);
+            EnsureItemData(itemsNode, CmdExportIdCardGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ExportAsIdCard",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Export As ID Card",
+                ["userToolTip"] = "Export ID card template metadata (JSON) and editable vector PDF"
+            }, CorelMateIcons.ExportIdCard);
+            EnsureItemData(itemsNode, CmdExportPrintGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ExportAsPrint",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Export As Print",
+                ["userToolTip"] = "Export print-ready CMYK PDF with text curved"
+            }, CorelMateIcons.ExportPrint);
+
+            // --- FEATURE 3: COLOR ---
+            EnsureItemData(itemsNode, FlyoutColorGuid, new Dictionary<string, string>
+            {
+                ["type"] = "flyout",
+                ["flyoutBarRef"] = CBarColorGuid,
+                ["userCaption"] = "Color",
+                ["userToolTip"] = "Convert colors and bitmaps to CMYK or RGB",
+                ["userCreated"] = "true"
+            }, CorelMateIcons.Color);
+            EnsureItemData(itemsNode, CmdColorCmykGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ConvertToCmyk",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Convert to CMYK",
+                ["userToolTip"] = "Convert all vector colors and bitmap images to CMYK"
+            }, CorelMateIcons.ConvertCmyk);
+            EnsureItemData(itemsNode, CmdColorRgbGuid, new Dictionary<string, string>
+            {
+                ["type"] = "button",
+                ["dynamicCommand"] = "ConvertAllToCurves.Converter.ConvertToRgb",
+                ["dynamicCategory"] = MacroCategoryGuid,
+                ["userCaption"] = "Convert to RGB",
+                ["userToolTip"] = "Convert all vector colors and bitmap images to RGB"
+            }, CorelMateIcons.ConvertRgb);
         }
 
         // 3. Ensure <commandBars> and flyout menus exist
@@ -215,54 +204,68 @@ public static class CorelWorkspacePatcher
 
         if (cbs != null)
         {
-            // 3a. Curves command bar
-            EnsureCommandBarMenu(cbs, CBarCurvesGuid, "CorelMate Curves", new[]
+            // 3a. Master CorelMate command bar (contains Curves, Export, Color)
+            EnsureCommandBarMenu(cbs, CorelMateCommandBarGuid, "CorelMate", new[]
+            {
+                FlyoutCurvesGuid,
+                FlyoutExportGuid,
+                FlyoutColorGuid
+            });
+
+            // 3b. Curves command bar
+            EnsureCommandBarMenu(cbs, CBarCurvesGuid, "Curves", new[]
             {
                 CmdCurveCurrentPageGuid,
                 CmdCurveAllPagesGuid,
                 CmdCurveSelectionGuid
             });
 
-            // 3b. Export command bar
-            EnsureCommandBarMenu(cbs, CBarExportGuid, "CorelMate Export", new[]
+            // 3c. Export command bar
+            EnsureCommandBarMenu(cbs, CBarExportGuid, "Export", new[]
             {
                 CmdExportIdCardGuid,
                 CmdExportPrintGuid
             });
 
-            // 3c. Color command bar
-            EnsureCommandBarMenu(cbs, CBarColorGuid, "CorelMate Color", new[]
+            // 3d. Color command bar
+            EnsureCommandBarMenu(cbs, CBarColorGuid, "Color", new[]
             {
                 CmdColorCmykGuid,
                 CmdColorRgbGuid
             });
-
-            // Remove obsolete master CorelMate command bar if present
-            var oldMasterBar = cbs.SelectSingleNode($"commandBarData[@guid='{CorelMateCommandBarGuid}']");
-            oldMasterBar?.ParentNode?.RemoveChild(oldMasterBar);
         }
 
-        // 4. Inject 3 Direct Feature Flyouts into Main Navigation Bar modes (ModeWelcomeGuid & ModeDocOpenGuid)
+        // 4. Inject single 'CorelMate' menu into Navigation Bar BEFORE Help
         string[] modes = { ModeWelcomeGuid, ModeDocOpenGuid };
-        string[] directNavItems = { FlyoutCurvesGuid, FlyoutExportGuid, FlyoutColorGuid };
+        string[] separateFlyouts = { FlyoutCurvesGuid, FlyoutExportGuid, FlyoutColorGuid };
         foreach (var mGuid in modes)
         {
             var modeNode = xml.SelectSingleNode($"//commandBarData[@guid='{MenuBarGuid}']/menubar/modeData[@guid='{mGuid}']") as XmlElement;
             if (modeNode != null)
             {
-                // Remove obsolete CorelMate master menu from navbar
-                var oldMaster = modeNode.SelectSingleNode($"item[@guidRef='{CorelMateMenuFlyoutGuid}']");
-                oldMaster?.ParentNode?.RemoveChild(oldMaster);
-
-                foreach (var navId in directNavItems)
+                // Remove individual flyouts if previously added to main menubar
+                foreach (var sepId in separateFlyouts)
                 {
-                    var existing = modeNode.SelectSingleNode($"item[@guidRef='{navId}']");
-                    if (existing == null)
-                    {
-                        var newIt = xml.CreateElement("item");
-                        newIt.SetAttribute("guidRef", navId);
-                        modeNode.AppendChild(newIt);
-                    }
+                    var sepNode = modeNode.SelectSingleNode($"item[@guidRef='{sepId}']");
+                    sepNode?.ParentNode?.RemoveChild(sepNode);
+                }
+
+                // Remove existing CorelMate item so we re-insert cleanly before Help
+                var existingMaster = modeNode.SelectSingleNode($"item[@guidRef='{CorelMateMenuFlyoutGuid}']");
+                existingMaster?.ParentNode?.RemoveChild(existingMaster);
+
+                var newMaster = xml.CreateElement("item");
+                newMaster.SetAttribute("guidRef", CorelMateMenuFlyoutGuid);
+
+                // Find Help item to insert BEFORE it
+                var helpNode = modeNode.SelectSingleNode($"item[@guidRef='{HelpItemGuid}']");
+                if (helpNode != null)
+                {
+                    modeNode.InsertBefore(newMaster, helpNode);
+                }
+                else
+                {
+                    modeNode.AppendChild(newMaster);
                 }
             }
         }
@@ -298,7 +301,7 @@ public static class CorelWorkspacePatcher
         }
     }
 
-    private static void EnsureItemData(XmlElement parent, string guid, Dictionary<string, string> attrs)
+    private static void EnsureItemData(XmlElement parent, string guid, Dictionary<string, string> attrs, string? iconBase64 = null)
     {
         var item = parent.SelectSingleNode($"itemData[@guid='{guid}']") as XmlElement;
         if (item == null)
@@ -310,6 +313,22 @@ public static class CorelWorkspacePatcher
         foreach (var kvp in attrs)
         {
             item.SetAttribute(kvp.Key, kvp.Value);
+        }
+
+        // Ensure noBmpOnMenu is removed so CorelDRAW displays the icon on the menu
+        item.RemoveAttribute("noBmpOnMenu");
+
+        if (!string.IsNullOrEmpty(iconBase64))
+        {
+            var bmpNode = item.SelectSingleNode("userSmallBitmap") as XmlElement;
+            if (bmpNode == null)
+            {
+                bmpNode = item.OwnerDocument.CreateElement("userSmallBitmap");
+                bmpNode.SetAttribute("xmlns:dt", "urn:schemas-microsoft-com:datatypes");
+                bmpNode.SetAttribute("dt:dt", "bin.base64");
+                item.AppendChild(bmpNode);
+            }
+            bmpNode.InnerText = iconBase64!;
         }
     }
 
