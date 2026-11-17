@@ -1,5 +1,34 @@
 # Task History
 
+## 2026-11-17: Fix Docker Connection ("Offline" State), Light/Dark Auto-Theme & Declutter UI
+
+Task: Fix 3 reported issues in live CorelDRAW 2026 UI:
+1. Docker status showed "Offline" / "CorelDRAW is not connected" because connection failed on load.
+2. UI was dark while CorelDRAW was in light theme — theme must match CorelDRAW automatically.
+3. UI was cluttered with 6 squeezed tabs and nested cards — streamline to clean, spacious, easy-to-use interface.
+4. Hardened page-to-curves conversion with shape auto-unlocking and secondary PowerClip fallbacks.
+
+Reason: User testing showed "Offline" warning, dark color mismatch with light CorelDRAW theme, and cluttered interface.
+
+Files/areas affected: `src/CorelMate.Host/ICorelDrawHost.cs`, `src/CorelMate.Host/CorelTextToCurvesConverter.cs`, `src/CorelMate.Host/CorelShapeTraversal.cs`, `src/CorelMate.UI/CorelMatePanel.cs`, `src/CorelMate.UI/CorelMatePanel.xaml`, `src/CorelMate.UI/Themes/CorelMateThemeManager.cs`, `src/CorelMate.UI/Themes/LightTheme.xaml`, `src/CorelMate.UI/Themes/DarkTheme.xaml`, `tests/CorelMate.Tests/Program.cs`, `.agent-memory/`, `CHANGELOG.md`.
+
+What changed:
+1. Fixed Connection Root Cause: `Marshal.GetActiveObject("CorelDRAW.Application")` failed with `MK_E_UNAVAILABLE` (0x800401E3) because CorelDRAW does not register in the Running Object Table (ROT). Replaced with single-instance COM activation via `Type.GetTypeFromProgID("CorelDRAW.Application")` and `Activator.CreateInstance()`, which connects instantly to the running CorelDRAW process without launching another instance.
+2. Connection Resilience & Auto-Reconnect: Added a deferred retry timer (up to 10 attempts) for graceful Docker initialization, plus on-demand reconnection on every user action button click.
+3. Adaptive Light/Dark Theme: Added `LightTheme.xaml` and `DarkTheme.xaml` palettes. Implemented `DetectSystemTheme()` in `CorelMateThemeManager` reading `AppsUseLightTheme` from Windows registry. Added a 1-click ☀️ / 🌙 theme toggle in the Docker header.
+4. Streamlined 3-Tab UI Redesign: Consolidated 6 cramped tabs into 3 spacious tabs (`🔤 Curves`, `🏷️ Badges`, `⚙️ Tools & Info`), bringing the 1-click "Convert Text to Curves" to the immediate foreground.
+5. Hardened Curve Conversion: Added `UnlockLockedShapes` option to `CorelTextToCurvesConverter` and `CorelShapeTraversal` to automatically unlock locked text, plus secondary selection conversion fallback for deeply nested PowerClip elements.
+
+Testing performed:
+- Live COM connection test with running CorelDRAW v27.2.0.135 passed immediately.
+- System theme detection returned `Light` as expected.
+- All unit and smoke tests passed in `CorelMate.Tests`.
+- Dev installation script `Install-Dev.ps1` completed cleanly.
+- Release build passed with 0 warnings, 0 errors.
+
+Follow-up: Merge via PR to `main`.
+
+
 ## 2026-11-17: Fix Docker UI Rendering & PowerClip/Group Curve Conversion Workflow
 
 Task: Fix 2 reported issues:

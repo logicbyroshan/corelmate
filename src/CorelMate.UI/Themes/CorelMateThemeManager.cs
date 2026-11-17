@@ -1,12 +1,81 @@
 using System;
 using System.Windows;
 using System.Windows.Controls;
+using Microsoft.Win32;
 using CorelMate.Core;
 
 namespace CorelMate.UI.Themes;
 
+public enum ThemeMode
+{
+    Auto,
+    Light,
+    Dark
+}
+
 public static class CorelMateThemeManager
 {
+    public static ThemeMode CurrentMode { get; private set; } = ThemeMode.Auto;
+    public static bool IsDarkActive { get; private set; }
+
+    public static ThemeMode DetectSystemTheme()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            if (key != null)
+            {
+                var val = key.GetValue("AppsUseLightTheme");
+                if (val is int intVal)
+                {
+                    return intVal == 0 ? ThemeMode.Dark : ThemeMode.Light;
+                }
+            }
+        }
+        catch
+        {
+        }
+
+        // Default to Light mode matching standard CorelDRAW default installation
+        return ThemeMode.Light;
+    }
+
+    public static void ApplyTheme(UserControl control, ThemeMode mode)
+    {
+        if (control == null) throw new ArgumentNullException(nameof(control));
+
+        CurrentMode = mode;
+        var effectiveMode = mode == ThemeMode.Auto ? DetectSystemTheme() : mode;
+        IsDarkActive = effectiveMode == ThemeMode.Dark;
+
+        var uriString = effectiveMode == ThemeMode.Dark
+            ? "/CorelMate.UI;component/Themes/DarkTheme.xaml"
+            : "/CorelMate.UI;component/Themes/LightTheme.xaml";
+
+        try
+        {
+            var dict = new ResourceDictionary { Source = new Uri(uriString, UriKind.RelativeOrAbsolute) };
+            var resources = control.Resources.MergedDictionaries;
+
+            // Remove any previous theme dictionaries
+            for (var index = resources.Count - 1; index >= 0; index--)
+            {
+                var src = resources[index].Source?.OriginalString ?? string.Empty;
+                if (src.IndexOf("Theme", StringComparison.OrdinalIgnoreCase) >= 0 &&
+                    src.IndexOf("CorelMateTheme.xaml", StringComparison.OrdinalIgnoreCase) < 0)
+                {
+                    resources.RemoveAt(index);
+                }
+            }
+
+            resources.Add(dict);
+        }
+        catch
+        {
+            // Fallback gracefully
+        }
+    }
+
     public static CorelEra ResolveEra(string preference, int detectedMajorVersion)
     {
         if (string.Equals(preference, "Classic2017", StringComparison.OrdinalIgnoreCase)) return CorelEra.Classic2017;
@@ -20,37 +89,8 @@ public static class CorelMateThemeManager
 
     public static void ApplyTheme(UserControl control, CorelEra era)
     {
-        if (control == null) throw new ArgumentNullException(nameof(control));
-
-        var uriString = era switch
-        {
-            CorelEra.Classic2017 => "/CorelMate.UI;component/Themes/Theme2017.xaml",
-            CorelEra.Charcoal2019 => "/CorelMate.UI;component/Themes/Theme2019.xaml",
-            CorelEra.Teal2021 => "/CorelMate.UI;component/Themes/Theme2021.xaml",
-            CorelEra.Azure2023 => "/CorelMate.UI;component/Themes/Theme2023.xaml",
-            _ => "/CorelMate.UI;component/Themes/Theme2026.xaml"
-        };
-
-        try
-        {
-            var dict = new ResourceDictionary { Source = new Uri(uriString, UriKind.RelativeOrAbsolute) };
-            // Clear existing era dictionary if any and insert the new one
-            var resources = control.Resources.MergedDictionaries;
-            for (var index = resources.Count - 1; index >= 0; index--)
-            {
-                var src = resources[index].Source?.OriginalString ?? string.Empty;
-                if (src.IndexOf("Theme20", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    resources.RemoveAt(index);
-                }
-            }
-
-            resources.Add(dict);
-        }
-        catch
-        {
-            // Fallback gracefully to default CorelMateTheme if pack URI fails
-        }
+        // Era theme call delegates to system-aware light/dark theme adaptation
+        var detected = DetectSystemTheme();
+        ApplyTheme(control, detected);
     }
 }
-

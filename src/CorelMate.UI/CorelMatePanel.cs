@@ -4,7 +4,9 @@ using System.Globalization;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using CorelMate.Badges;
 using CorelMate.Core;
@@ -30,15 +32,17 @@ public sealed partial class CorelMatePanel : UserControl
         public TextBox QuantityBox { get; }
     }
 
-    private readonly CorelDrawHost? host;
-    private readonly CorelDrawBadgeGenerator? generator;
-    private readonly CorelTextToCurvesConverter? curvesConverter;
-    private readonly CorelDocumentInspector? documentInspector;
+    private CorelDrawHost? host;
+    private CorelDrawBadgeGenerator? generator;
+    private CorelTextToCurvesConverter? curvesConverter;
+    private CorelDocumentInspector? documentInspector;
     private readonly List<RowEditor> rowEditors = new List<RowEditor>();
     private CorelBadgeMaster? master;
     private bool isGenerating;
     private int detectedMajorVersion = 27;
     private CorelEra currentEra = CorelEra.AdaptivePro2026;
+    private DispatcherTimer? retryTimer;
+    private int retryCount;
 
     public string Title => "CorelMate";
     public string Caption => "CorelMate";
@@ -50,6 +54,37 @@ public sealed partial class CorelMatePanel : UserControl
     public CorelMatePanel(string targetVersion)
     {
         InitializeComponent();
+
+        // 1. Auto-detect and apply theme (Light vs Dark) matching CorelDRAW / Windows
+        ApplyThemeMode(ThemeMode.Auto);
+
+        // 2. Initial connection attempt
+        var connected = TryConnectHost();
+        if (!connected)
+        {
+            StartDeferredConnectionRetry();
+        }
+
+        // 3. Register Loaded event to ensure active document refresh
+        Loaded += OnPanelLoaded;
+    }
+
+    private void OnPanelLoaded(object sender, RoutedEventArgs e)
+    {
+        if (host == null)
+        {
+            TryConnectHost();
+        }
+        else
+        {
+            UpdateActiveDocumentSummary();
+        }
+    }
+
+    #region Host Connection & Auto-Reconnect
+
+    private bool TryConnectHost()
+    {
         try
         {
             host = CorelDrawHost.ConnectToRunningInstance();
@@ -57,7 +92,6 @@ public sealed partial class CorelMatePanel : UserControl
             curvesConverter = new CorelTextToCurvesConverter(host);
             documentInspector = new CorelDocumentInspector(host);
 
-            // Version Detection & Compatibility Evaluation
             var rawVersion = host.HostVersionString;
             detectedMajorVersion = host.HostMajorVersion;
             if (detectedMajorVersion <= 0) detectedMajorVersion = 27;
@@ -65,77 +99,284 @@ public sealed partial class CorelMatePanel : UserControl
             var compat = CorelCompatibilityRegistry.Evaluate(detectedMajorVersion, rawVersion);
             currentEra = CorelCompatibilityRegistry.GetEraForVersion(detectedMajorVersion);
 
-            // Apply version-adaptive UI styling
-            CorelMateThemeManager.ApplyTheme(this, currentEra);
-
-            // Header & Status Updates
-            HeaderEraText.Text = $"v{detectedMajorVersion} / {currentEra}";
-            StatusText.Text = $"{compat.VersionDescription} connected. Ready.";
+            HeaderEraText.Text = $"v{detectedMajorVersion}";
             StatusBadgeText.Text = "Connected";
             StatusIndicatorDot.Fill = (Brush)FindResource("CorelMateSuccessBrush");
             HostVersionText.Text = compat.VersionDescription;
-            DashHostVersionText.Text = compat.VersionDescription;
+            CompatStatusText.Text = "Connected (Ready)";
             DashArchText.Text = Environment.Is64BitOperatingSystem ? "64-bit (x64)" : "32-bit (x86)";
-            CompatHostText.Text = $"{compat.VersionDescription} ({rawVersion})";
-            CompatStatusText.Text = compat.StatusMessage;
-            CompatEraText.Text = $"{currentEra} Era Styling";
 
-            UpdateActiveDocumentDashboard();
+            UpdateActiveDocumentSummary();
+
+            if (retryTimer != null)
+            {
+                retryTimer.Stop();
+                retryTimer = null;
+            }
+
+            return true;
         }
-        catch (Exception exception)
+        catch (Exception ex)
         {
-            StatusText.Text = "CorelDRAW connection unavailable: " + exception.Message;
             StatusBadgeText.Text = "Offline";
             StatusIndicatorDot.Fill = (Brush)FindResource("CorelMateErrorBrush");
-            HostVersionText.Text = "Disconnected (" + exception.Message + ")";
-            DashHostVersionText.Text = "Disconnected";
-            DashDocumentText.Text = "Active Document: Offline";
-            CompatStatusText.Text = "Offline: " + exception.Message;
+            DashDocumentText.Text = "CorelDRAW is not connected. (Click to reconnect)";
+            CompatStatusText.Text = "Disconnected: " + ex.Message;
+            return false;
         }
     }
 
-    private void UpdateActiveDocumentDashboard()
+    private void StartDeferredConnectionRetry()
+    {
+        StatusBadgeText.Text = "Connecting...";
+        StatusIndicatorDot.Fill = (Brush)FindResource("CorelMateWarningBrush");
+
+        retryCount = 0;
+        retryTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1000) };
+        retryTimer.Tick += (s, e) =>
+        {
+            retryCount++;
+            if (TryConnectHost())
+            {
+                retryTimer.Stop();
+                retryTimer = null;
+            }
+            else if (retryCount >= 10)
+            {
+                retryTimer.Stop();
+                retryTimer = null;
+                StatusBadgeText.Text = "Offline";
+                StatusIndicatorDot.Fill = (Brush)FindResource("CorelMateErrorBrush");
+            }
+        };
+        retryTimer.Start();
+    }
+
+    private bool EnsureConnected()
+    {
+        if (host != null && curvesConverter != null) return true;
+        return TryConnectHost();
+    }
+
+    private void UpdateActiveDocumentSummary()
     {
         try
         {
-            var summary = host?.ActiveDocumentSummary;
-            DashDocumentText.Text = !string.IsNullOrEmpty(summary)
-                ? $"Active Document: {summary}"
-                : "Active Document: None (Open or create a document in CorelDRAW)";
+            if (host == null)
+            {
+                DashDocumentText.Text = "CorelDRAW is not connected.";
+                return;
+            }
+
+            var summary = host.ActiveDocumentSummary;
+            if (!string.IsNullOrEmpty(summary))
+            {
+                DashDocumentText.Text = "📄 " + summary;
+            }
+            else
+            {
+                DashDocumentText.Text = "No active document. (Open or create a file in CorelDRAW)";
+            }
         }
         catch
         {
-            DashDocumentText.Text = "Active Document: None";
+            DashDocumentText.Text = "No active document.";
         }
     }
 
+    private void RefreshDoc_Click(object sender, RoutedEventArgs e)
+    {
+        EnsureConnected();
+        UpdateActiveDocumentSummary();
+    }
+
+    private void ConnectionBadge_Click(object sender, MouseButtonEventArgs e)
+    {
+        if (TryConnectHost())
+        {
+            MessageBox.Show("CorelMate is successfully connected to CorelDRAW!\r\n" + HostVersionText.Text, "CorelMate Connection", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        else
+        {
+            MessageBox.Show("Could not connect to CorelDRAW. Please ensure CorelDRAW is running and open.", "CorelMate Connection", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void Reconnect_Click(object sender, RoutedEventArgs e)
+    {
+        if (TryConnectHost())
+        {
+            MessageBox.Show("Connected successfully to CorelDRAW!", "CorelMate", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+        else
+        {
+            MessageBox.Show("CorelDRAW could not be reached. Ensure a document is open.", "CorelMate", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    #endregion
+
+    #region Theme & Appearance
+
+    private void ApplyThemeMode(ThemeMode mode)
+    {
+        CorelMateThemeManager.ApplyTheme(this, mode);
+        ThemeToggleButton.Content = CorelMateThemeManager.IsDarkActive ? "🌙" : "☀️";
+        ThemeToggleButton.ToolTip = CorelMateThemeManager.IsDarkActive ? "Dark Theme Active (Click for Light)" : "Light Theme Active (Click for Dark)";
+    }
+
+    private void ThemeToggle_Click(object sender, RoutedEventArgs e)
+    {
+        var newMode = CorelMateThemeManager.IsDarkActive ? ThemeMode.Light : ThemeMode.Dark;
+        ApplyThemeMode(newMode);
+    }
+
+    private void ThemeLight_Click(object sender, RoutedEventArgs e)
+    {
+        ApplyThemeMode(ThemeMode.Light);
+    }
+
+    private void ThemeDark_Click(object sender, RoutedEventArgs e)
+    {
+        ApplyThemeMode(ThemeMode.Dark);
+    }
+
+    private void ThemeAuto_Click(object sender, RoutedEventArgs e)
+    {
+        ApplyThemeMode(ThemeMode.Auto);
+    }
+
+    #endregion
+
+    #region Streamlined Tab Navigation (3 Tabs)
+
     private void TabRadio_Checked(object sender, RoutedEventArgs e)
     {
-        if (DashboardTabContent == null || BadgesTabContent == null || CurvesTabContent == null ||
-            InspectorTabContent == null || CompatTabContent == null || SettingsTabContent == null) return;
+        if (CurvesTabContent == null || BadgesTabContent == null || InspectorTabContent == null) return;
 
-        DashboardTabContent.Visibility = TabDashboardRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-        BadgesTabContent.Visibility = TabBadgesRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         CurvesTabContent.Visibility = TabCurvesRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+        BadgesTabContent.Visibility = TabBadgesRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
         InspectorTabContent.Visibility = TabInspectorRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-        CompatTabContent.Visibility = TabCompatRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
-        SettingsTabContent.Visibility = TabInfoRadio.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
 
-        if (TabDashboardRadio.IsChecked == true) UpdateActiveDocumentDashboard();
-        if (TabInspectorRadio.IsChecked == true) RefreshDocumentInspection();
+        if (TabCurvesRadio.IsChecked == true)
+        {
+            UpdateActiveDocumentSummary();
+        }
+        else if (TabInspectorRadio.IsChecked == true)
+        {
+            RefreshDocumentInspection();
+        }
     }
 
-    private void DashGoBadges_Click(object sender, RoutedEventArgs e) { TabBadgesRadio.IsChecked = true; }
-    private void DashGoCurves_Click(object sender, RoutedEventArgs e) { TabCurvesRadio.IsChecked = true; }
-    private void DashGoInspector_Click(object sender, RoutedEventArgs e) { TabInspectorRadio.IsChecked = true; }
-    private void DashGoCompat_Click(object sender, RoutedEventArgs e) { TabCompatRadio.IsChecked = true; }
+    #endregion
 
-    private void DashConvertPage_Click(object sender, RoutedEventArgs e)
+    #region Convert Text To Curves Feature
+
+    private CurveConversionScope GetSelectedScope()
     {
-        TabCurvesRadio.IsChecked = true;
-        if (ScopeCurrentPageRadio != null) ScopeCurrentPageRadio.IsChecked = true;
-        ConvertCurvesButton_Click(sender, e);
+        if (ScopeSelectionRadio?.IsChecked == true) return CurveConversionScope.SelectedObjects;
+        if (ScopeAllPagesRadio?.IsChecked == true) return CurveConversionScope.AllPages;
+        return CurveConversionScope.CurrentPage;
     }
+
+    private void PreflightCurvesButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (!EnsureConnected()) throw new InvalidOperationException("CorelDRAW is not connected. Please open CorelDRAW.");
+            if (curvesConverter == null) throw new InvalidOperationException("CorelDRAW is not connected.");
+
+            var scope = GetSelectedScope();
+            var unlock = CurvesUnlockShapesCheck?.IsChecked == true;
+            var opts = new CurveConversionOptions { Scope = scope, UnlockLockedShapes = unlock };
+            var preflight = curvesConverter.Preflight(scope, opts);
+
+            CurvesMetricsGrid.Visibility = Visibility.Visible;
+            CurvesFoundCountText.Text = preflight.Summary.FoundTextObjects.ToString(CultureInfo.InvariantCulture);
+            CurvesConvertibleCountText.Text = preflight.Summary.ConvertibleTextObjects.ToString(CultureInfo.InvariantCulture);
+            CurvesGroupsCountText.Text = preflight.Summary.GroupsInspected.ToString(CultureInfo.InvariantCulture);
+            CurvesLockedCountText.Text = preflight.Summary.LockedTextObjects.ToString(CultureInfo.InvariantCulture);
+
+            var scopeDesc = scope == CurveConversionScope.CurrentPage ? "current page"
+                : scope == CurveConversionScope.SelectedObjects ? "selection" : "entire document (" + preflight.Summary.PagesProcessed + " pages)";
+
+            CurvesPreflightDetailText.Visibility = Visibility.Visible;
+            CurvesPreflightDetailText.Text = "Scope: " + scopeDesc + " | Artistic: " + preflight.Summary.ArtisticTextCount + ", Paragraph: " + preflight.Summary.ParagraphTextCount + ", PowerClips: " + preflight.Summary.PowerClipsInspected;
+
+            if (preflight.Summary.ConvertibleTextObjects == 0)
+            {
+                CurvesResultText.Text = "No convertible text found in " + scopeDesc + "." + (preflight.Summary.SkippedTextObjects > 0 ? " (" + preflight.Summary.SkippedTextObjects + " skipped/locked)" : "");
+            }
+            else
+            {
+                CurvesResultText.Text = "Preflight complete: " + preflight.Summary.ConvertibleTextObjects + " text object(s) ready for conversion in " + scopeDesc + ".";
+            }
+        }
+        catch (Exception ex)
+        {
+            CurvesResultText.Text = ex is InvalidOperationException ? ex.Message : "Could not complete preflight: " + ex.Message;
+        }
+    }
+
+    private void ConvertCurvesButton_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            if (!EnsureConnected()) throw new InvalidOperationException("CorelDRAW is not connected. Please open CorelDRAW.");
+            if (curvesConverter == null) throw new InvalidOperationException("CorelDRAW is not connected.");
+
+            var scope = GetSelectedScope();
+            var unlock = CurvesUnlockShapesCheck?.IsChecked == true;
+            var opts = new CurveConversionOptions { Scope = scope, UnlockLockedShapes = unlock };
+            var preflight = curvesConverter.Preflight(scope, opts);
+
+            CurvesMetricsGrid.Visibility = Visibility.Visible;
+            CurvesFoundCountText.Text = preflight.Summary.FoundTextObjects.ToString(CultureInfo.InvariantCulture);
+            CurvesConvertibleCountText.Text = preflight.Summary.ConvertibleTextObjects.ToString(CultureInfo.InvariantCulture);
+            CurvesGroupsCountText.Text = preflight.Summary.GroupsInspected.ToString(CultureInfo.InvariantCulture);
+            CurvesLockedCountText.Text = preflight.Summary.LockedTextObjects.ToString(CultureInfo.InvariantCulture);
+
+            var scopeDesc = scope == CurveConversionScope.CurrentPage ? "current page"
+                : scope == CurveConversionScope.SelectedObjects ? "selection" : "all pages (" + preflight.Summary.PagesProcessed + " pages)";
+
+            if (preflight.Summary.ConvertibleTextObjects == 0)
+            {
+                CurvesResultText.Text = "No convertible text objects found in " + scopeDesc + ".";
+                if (preflight.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + preflight.Summary.SkippedTextObjects + " text object(s) skipped/locked).";
+                return;
+            }
+
+            var saveCopy = CurvesSaveCopyCheck?.IsChecked == true;
+            var prompt = "Convert " + preflight.Summary.ConvertibleTextObjects + " text object(s) to curves in " + scopeDesc + "?\r\n\r\n"
+                       + (saveCopy ? "✓ A backup copy (_curves.cdr) will be saved first.\r\n\r\n" : "")
+                       + "Note: Text will be converted to vector curves in-place. You can undo this with Ctrl+Z.";
+
+            var confirmation = MessageBox.Show(prompt, "CorelMate: Convert Text to Curves", MessageBoxButton.OKCancel, MessageBoxImage.Question);
+            if (confirmation != MessageBoxResult.OK) return;
+
+            var options = new CurveConversionOptions
+            {
+                Scope = scope,
+                SaveConvertedCopy = saveCopy,
+                UnlockLockedShapes = unlock
+            };
+
+            var result = curvesConverter.Convert(preflight, options);
+            var msg = "✓ " + result.ConvertedTextObjects + " text object(s) successfully converted to curves in " + result.Summary.ExecutionDurationMs + "ms.";
+            if (result.FailedTextObjects > 0) msg += " (" + result.FailedTextObjects + " failed).";
+            if (result.Summary.SkippedTextObjects > 0) msg += " (" + result.Summary.SkippedTextObjects + " skipped/locked).";
+            if (!string.IsNullOrEmpty(result.Summary.SavedCopyPath)) msg += "\r\n💾 Backup saved: " + Path.GetFileName(result.Summary.SavedCopyPath);
+
+            CurvesResultText.Text = msg;
+            UpdateActiveDocumentSummary();
+        }
+        catch (Exception exception)
+        {
+            CurvesResultText.Text = exception is InvalidOperationException ? exception.Message : "CorelDRAW could not complete the text conversion: " + exception.Message;
+        }
+    }
+
+    #endregion
 
     #region Document Inspector Feature
 
@@ -148,9 +389,10 @@ public sealed partial class CorelMatePanel : UserControl
     {
         try
         {
+            if (!EnsureConnected()) throw new InvalidOperationException("CorelDRAW is not connected.");
             if (documentInspector == null) throw new InvalidOperationException("CorelDRAW is not connected.");
-            var metrics = documentInspector.InspectActiveDocument();
 
+            var metrics = documentInspector.InspectActiveDocument();
             InspDocNameText.Text = metrics.Name;
             InspDimensionsText.Text = $"{metrics.DimensionsString} ({metrics.ColorMode})";
             InspTotalShapesText.Text = metrics.TotalShapes.ToString(CultureInfo.InvariantCulture);
@@ -160,34 +402,18 @@ public sealed partial class CorelMatePanel : UserControl
 
             if (metrics.UniqueFonts.Count > 0)
             {
-                InspFontsListText.Text = $"{metrics.UniqueFonts.Count} font(s) detected:\r\n• " + string.Join("\r\n• ", metrics.UniqueFonts);
+                InspFontsListText.Text = string.Join(", ", metrics.UniqueFonts);
             }
             else
             {
-                InspFontsListText.Text = "No text objects with fonts detected on the active page.";
+                InspFontsListText.Text = "No fonts detected on active page.";
             }
         }
         catch (Exception ex)
         {
             InspDocNameText.Text = "Inspection unavailable";
-            InspDimensionsText.Text = "-";
-            InspFontsListText.Text = ex.Message;
-        }
-    }
-
-    #endregion
-
-    #region Version-Adaptive Theme Switching
-
-    private void ThemeBtn_Click(object sender, RoutedEventArgs e)
-    {
-        if (sender is Button btn && btn.Tag is string tag)
-        {
-            var resolved = CorelMateThemeManager.ResolveEra(tag, detectedMajorVersion);
-            currentEra = resolved;
-            CorelMateThemeManager.ApplyTheme(this, resolved);
-            HeaderEraText.Text = $"v{detectedMajorVersion} / {currentEra}";
-            CompatEraText.Text = $"{currentEra} Era Styling";
+            InspDimensionsText.Text = ex.Message;
+            InspFontsListText.Text = "Could not inspect active document: " + ex.Message;
         }
     }
 
@@ -199,25 +425,159 @@ public sealed partial class CorelMatePanel : UserControl
     {
         try
         {
+            if (!EnsureConnected()) throw new InvalidOperationException("CorelDRAW is not connected.");
             if (generator == null) throw new InvalidOperationException("CorelDRAW is not connected.");
+
             master = generator.CaptureSelectedMaster();
-            UpdateVariablesDisplay();
-            DimensionsText.Text = master.WidthMillimeters.ToString("0.##", CultureInfo.InvariantCulture) + " × " + master.HeightMillimeters.ToString("0.##", CultureInfo.InvariantCulture) + " mm";
-            BadgeWidthText.Text = master.WidthMillimeters.ToString("0.###", CultureInfo.InvariantCulture);
-            BadgeHeightText.Text = master.HeightMillimeters.ToString("0.###", CultureInfo.InvariantCulture);
-            RowsPanel.Children.Clear();
-            rowEditors.Clear();
-            AddRowHeader();
-            AddRow();
+            DimensionsText.Text = $"{master.WidthMillimeters:F1} × {master.HeightMillimeters:F1} mm";
+            BadgeWidthText.Text = master.WidthMillimeters.ToString("0.##", CultureInfo.InvariantCulture);
+            BadgeHeightText.Text = master.HeightMillimeters.ToString("0.##", CultureInfo.InvariantCulture);
+
             SetMasterControlsEnabled(true);
-            StatusText.Text = "Master artwork captured (" + master.Variables.Count + " variables). Enter data rows or import CSV/XLSX.";
-            RefreshPreview();
+            UpdateVariablesDisplay();
+            RebuildRowEditors();
+            RecalculatePlan();
+
+            StatusText.Text = master.Variables.Count == 0
+                ? "Artwork captured without placeholders (static duplication mode)."
+                : $"Captured master with {master.Variables.Count} variable(s). Ready.";
         }
         catch (Exception exception)
         {
             ShowFriendlyError(exception);
-            ClearMasterState();
         }
+    }
+
+    private void AddRowButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (master == null) return;
+        AddRowEditor(CreateDefaultRow());
+        UpdateRowCountDisplay();
+        RecalculatePlan();
+    }
+
+    private void DeleteRowButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (rowEditors.Count == 0) return;
+        var last = rowEditors[rowEditors.Count - 1];
+        rowEditors.RemoveAt(rowEditors.Count - 1);
+        RowsPanel.Children.Remove(last.Container);
+        DeleteRowButton.IsEnabled = rowEditors.Count > 0;
+        UpdateRowCountDisplay();
+        RecalculatePlan();
+    }
+
+    private void ImportDataButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (master == null) return;
+
+        var dialog = new OpenFileDialog
+        {
+            Title = "Import Badge Data",
+            Filter = "CSV & Delimited Text (*.csv;*.txt)|*.csv;*.txt|All Files (*.*)|*.*"
+        };
+
+        if (dialog.ShowDialog() != true) return;
+
+        try
+        {
+            var lines = File.ReadAllLines(dialog.FileName);
+            if (lines.Length < 2) throw new InvalidOperationException("The imported file must contain a header row and at least one data row.");
+
+            var delimiter = dialog.FileName.EndsWith(".tsv", StringComparison.OrdinalIgnoreCase) ? '\t' : ',';
+            var headers = lines[0].Split(delimiter);
+
+            var rows = new List<BadgeDataRow>();
+            for (var i = 1; i < lines.Length; i++)
+            {
+                var line = lines[i].Trim();
+                if (string.IsNullOrEmpty(line)) continue;
+
+                var cols = line.Split(delimiter);
+                var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                for (var j = 0; j < Math.Min(headers.Length, cols.Length); j++)
+                {
+                    dict[headers[j].Trim()] = cols[j].Trim();
+                }
+                rows.Add(new BadgeDataRow(dict, 1));
+            }
+
+            rowEditors.Clear();
+            RowsPanel.Children.Clear();
+            foreach (var row in rows)
+            {
+                AddRowEditor(row);
+            }
+
+            DeleteRowButton.IsEnabled = rowEditors.Count > 0;
+            UpdateRowCountDisplay();
+            RecalculatePlan();
+            StatusText.Text = $"Imported {rows.Count} data row(s) from {Path.GetFileName(dialog.FileName)}.";
+        }
+        catch (Exception exception)
+        {
+            ShowFriendlyError(exception);
+        }
+    }
+
+    private void GenerateButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (master == null || isGenerating) return;
+
+        try
+        {
+            if (!EnsureConnected()) throw new InvalidOperationException("CorelDRAW is not connected.");
+            if (generator == null) throw new InvalidOperationException("CorelDRAW is not connected.");
+
+            var rows = CollectRows();
+            var settings = ReadSettings();
+            var totalCount = 0;
+            foreach (var r in rows) totalCount += r.Quantity;
+            var plan = BadgeLayoutEngine.Plan(settings, totalCount);
+
+            var prompt = $"Generate {totalCount} badge(s) across {plan.Pages.Count} page(s)?";
+            if (MessageBox.Show(prompt, "CorelMate Badge Generation", MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK) return;
+
+            SetBusyState(true);
+            var result = generator.Generate(master, settings, rows);
+            ResultText.Text = $"✓ Generated {result.TotalBadges} badge(s) across {result.PagesCreated} page(s).";
+            ResultText.Foreground = (Brush)FindResource("CorelMateSuccessBrush");
+            StatusText.Text = "Badge generation completed successfully.";
+            UpdateActiveDocumentSummary();
+        }
+        catch (Exception exception)
+        {
+            ShowFriendlyError(exception);
+        }
+        finally
+        {
+            SetBusyState(false);
+        }
+    }
+
+    private void PreviewButton_Click(object sender, RoutedEventArgs e)
+    {
+        RecalculatePlan();
+    }
+
+    private void ResetButton_Click(object sender, RoutedEventArgs e)
+    {
+        ClearMasterState();
+        ResultText.Text = string.Empty;
+        StatusText.Text = "Select a master badge template in CorelDRAW to begin.";
+    }
+
+    private void LayoutTextChanged(object sender, TextChangedEventArgs e)
+    {
+        RecalculatePlan();
+    }
+
+    private void SetMasterControlsEnabled(bool enabled)
+    {
+        AddRowButton.IsEnabled = enabled;
+        ImportDataButton.IsEnabled = enabled;
+        PreviewButton.IsEnabled = enabled;
+        GenerateButton.IsEnabled = enabled && rowEditors.Count > 0;
     }
 
     private void UpdateVariablesDisplay()
@@ -225,18 +585,25 @@ public sealed partial class CorelMatePanel : UserControl
         VariablesWrapPanel.Children.Clear();
         if (master == null || master.Variables.Count == 0)
         {
-            var border = new Border { Style = GetResource<Style>("CorelMatePillStyle") };
-            border.Child = new TextBlock { Text = "None detected", FontSize = 11, Foreground = (Brush)FindResource("CorelMateTextMutedBrush") };
-            VariablesWrapPanel.Children.Add(border);
+            VariablesWrapPanel.Children.Add(new Border
+            {
+                Style = GetResource<Style>("CorelMatePillStyle"),
+                Child = new TextBlock
+                {
+                    Text = master == null ? "None detected" : "Static (no placeholders)",
+                    FontSize = 11,
+                    Foreground = (Brush)FindResource("CorelMateTextMutedBrush")
+                }
+            });
             return;
         }
 
-        foreach (var variable in master.Variables)
+        foreach (var v in master.Variables)
         {
             var border = new Border { Style = GetResource<Style>("CorelMatePillStyle") };
             border.Child = new TextBlock
             {
-                Text = "{{" + variable + "}}",
+                Text = v,
                 FontSize = 11,
                 FontWeight = FontWeights.SemiBold,
                 Foreground = (Brush)FindResource("CorelMateAccentBrush")
@@ -245,305 +612,156 @@ public sealed partial class CorelMatePanel : UserControl
         }
     }
 
-    private void GenerateButton_Click(object sender, RoutedEventArgs e)
+    private void RebuildRowEditors()
     {
-        try
-        {
-            if (generator == null || master == null) throw new InvalidOperationException("Capture master artwork first.");
-            if (isGenerating) return;
-            isGenerating = true;
-            SetBusyState(true);
-            var rows = ParseRows();
-            var settings = CreateLayoutSettings();
-            var result = generator.Generate(master, settings, rows);
-            ResultText.Text = "✓ Successfully generated " + result.TotalBadges + " badges across " + result.PagesCreated + " page(s). Master artwork was preserved.";
-            ResultText.Foreground = (Brush)FindResource("CorelMateSuccessBrush");
-            StatusText.Text = "Generation complete (" + result.TotalBadges + " badges).";
-        }
-        catch (Exception exception)
-        {
-            ShowFriendlyError(exception);
-        }
-        finally
-        {
-            isGenerating = false;
-            SetBusyState(false);
-        }
-    }
-
-    private void AddRowButton_Click(object sender, RoutedEventArgs e) => AddRow();
-
-    private void DeleteRowButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (rowEditors.Count == 0) return;
-        RowsPanel.Children.Remove(rowEditors[rowEditors.Count - 1].Container);
-        rowEditors.RemoveAt(rowEditors.Count - 1);
-        UpdateRowCountDisplay();
-        RefreshPreview();
-    }
-
-    private void ImportDataButton_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (master == null) throw new InvalidOperationException("Capture the master artwork first.");
-            var dialog = new OpenFileDialog
-            {
-                Filter = "Data files (*.csv;*.xlsx)|*.csv;*.xlsx|CSV files (*.csv)|*.csv|Excel workbooks (*.xlsx)|*.xlsx",
-                CheckFileExists = true,
-                Multiselect = false
-            };
-            if (dialog.ShowDialog() != true) return;
-
-            var imported = string.Equals(System.IO.Path.GetExtension(dialog.FileName), ".xlsx", StringComparison.OrdinalIgnoreCase)
-                ? XlsxImportSource.Read(dialog.FileName)
-                : CsvImportSource.Read(dialog.FileName);
-            var validation = BadgeImportMapper.Validate(imported, master.Variables);
-            if (!validation.IsValid)
-            {
-                var count = Math.Min(validation.Errors.Count, 10);
-                var shownErrors = new List<string>();
-                for (var index = 0; index < count; index++) shownErrors.Add(validation.Errors[index]);
-                var message = "Import validation failed:\r\n" + string.Join("\r\n", shownErrors);
-                if (validation.Errors.Count > count) message += "\r\n...and " + (validation.Errors.Count - count) + " more error(s).";
-                ResultText.Text = message;
-                ResultText.Foreground = (Brush)FindResource("CorelMateErrorBrush");
-                StatusText.Text = "Import rejected; CorelDRAW was not modified.";
-                ClearRowState();
-                return;
-            }
-
-            ReplaceRows(validation.Rows);
-            var sourceLabel = string.IsNullOrWhiteSpace(imported.WorksheetName) ? imported.SourceName : imported.SourceName + " / " + imported.WorksheetName;
-            StatusText.Text = "Imported " + validation.Rows.Count + " rows from " + sourceLabel + ".";
-            ResultText.Text = "✓ Mapped: " + string.Join(", ", validation.UsedColumns) + (validation.UnusedColumns.Count == 0 ? string.Empty : "\r\nUnused: " + string.Join(", ", validation.UnusedColumns));
-            ResultText.Foreground = (Brush)FindResource("CorelMateSuccessBrush");
-            RefreshPreview();
-        }
-        catch (Exception exception)
-        {
-            ShowFriendlyError(exception);
-            ClearRowState();
-        }
-    }
-
-    private void PreviewButton_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            ParseRows();
-            RefreshPreview();
-            ResultText.Text = "Preview refreshed successfully.";
-            ResultText.Foreground = (Brush)FindResource("CorelMateTextSecondaryBrush");
-        }
-        catch (Exception exception)
-        {
-            ShowFriendlyError(exception);
-        }
-    }
-
-    private void ResetButton_Click(object sender, RoutedEventArgs e)
-    {
-        master = null;
         rowEditors.Clear();
         RowsPanel.Children.Clear();
-        DimensionsText.Text = "No artwork captured";
-        UpdateVariablesDisplay();
-        BadgeWidthText.Text = string.Empty;
-        BadgeHeightText.Text = string.Empty;
-        MetricTotalText.Text = "0";
-        MetricColumnsText.Text = "-";
-        MetricPerPageText.Text = "-";
-        MetricPagesText.Text = "-";
-        PreviewDetailText.Text = "Capture a master to preview the layout plan.";
-        ResultText.Text = string.Empty;
-        CurvesResultText.Text = "Select artwork in CorelDRAW and click Convert.";
-        StatusText.Text = "Select a master badge template in CorelDRAW to begin.";
-        ClearMasterState();
-    }
-
-    private List<BadgeDataRow> ParseRows()
-    {
-        var rows = new List<BadgeDataRow>();
-        if (master == null) throw new InvalidOperationException("Capture the master artwork first.");
-        foreach (var editor in rowEditors)
-        {
-            var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            for (var index = 0; index < master.Variables.Count; index++)
-            {
-                var value = editor.ValueBoxes[index].Text.Trim();
-                if (value.Length == 0) throw new FormatException("Enter a value for {{" + master.Variables[index] + "}} in every row.");
-                values[master.Variables[index]] = value;
-            }
-
-            if (!int.TryParse(editor.QuantityBox.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var quantity) || quantity < 0) throw new FormatException("Quantity must be a non-negative integer.");
-            rows.Add(new BadgeDataRow(values, quantity));
-        }
-
-        if (rows.Count == 0) throw new FormatException("Add at least one data row.");
-        return rows;
-    }
-
-    private void AddRow()
-    {
         if (master == null) return;
-        var container = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
-        var valueBoxes = new List<TextBox>();
-        foreach (var variable in master.Variables)
-        {
-            var box = new TextBox { Width = 96, ToolTip = variable, Style = GetResource<Style>("CorelMateTextBoxStyle") };
-            box.TextChanged += RowInputChanged;
-            valueBoxes.Add(box);
-            container.Children.Add(box);
-        }
 
-        var quantityBox = new TextBox { Width = 50, Text = "1", ToolTip = "Quantity", Style = GetResource<Style>("CorelMateTextBoxStyle") };
-        quantityBox.TextChanged += RowInputChanged;
-        container.Children.Add(quantityBox);
-        rowEditors.Add(new RowEditor(container, valueBoxes, quantityBox));
-        RowsPanel.Children.Add(container);
+        AddRowEditor(CreateDefaultRow());
         DeleteRowButton.IsEnabled = true;
         UpdateRowCountDisplay();
-        RefreshPreview();
     }
 
-    private void ReplaceRows(IReadOnlyList<BadgeDataRow> rows)
+    private BadgeDataRow CreateDefaultRow()
     {
-        if (master == null) return;
-        RowsPanel.Children.Clear();
-        rowEditors.Clear();
-        AddRowHeader();
-        foreach (var row in rows)
+        var values = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (master != null)
         {
-            var container = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 2, 0, 2) };
-            var valueBoxes = new List<TextBox>();
-            foreach (var variable in master.Variables)
+            foreach (var v in master.Variables)
             {
-                var box = new TextBox { Width = 96, Text = row.GetValue(variable), ToolTip = variable, Style = GetResource<Style>("CorelMateTextBoxStyle") };
-                box.TextChanged += RowInputChanged;
-                valueBoxes.Add(box);
-                container.Children.Add(box);
+                values[v] = v;
             }
-
-            var quantityBox = new TextBox { Width = 50, Text = row.Quantity.ToString(CultureInfo.InvariantCulture), ToolTip = "Quantity", Style = GetResource<Style>("CorelMateTextBoxStyle") };
-            quantityBox.TextChanged += RowInputChanged;
-            container.Children.Add(quantityBox);
-            rowEditors.Add(new RowEditor(container, valueBoxes, quantityBox));
-            RowsPanel.Children.Add(container);
         }
-        DeleteRowButton.IsEnabled = rowEditors.Count > 0;
-        UpdateRowCountDisplay();
-        RefreshPreview();
+        return new BadgeDataRow(values, 1);
     }
 
-    private void AddRowHeader()
+    private void AddRowEditor(BadgeDataRow row)
     {
         if (master == null) return;
-        var header = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 0, 0, 6) };
-        foreach (var variable in master.Variables)
+
+        var container = new StackPanel { Margin = new Thickness(0, 0, 0, 4) };
+        var grid = new Grid();
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(50, GridUnitType.Pixel) });
+
+        var valuesPanel = new WrapPanel();
+        var valueBoxes = new List<TextBox>();
+
+        foreach (var v in master.Variables)
         {
-            header.Children.Add(new TextBlock
+            var box = new TextBox
             {
-                Text = variable,
-                Width = 96,
-                Margin = new Thickness(4, 0, 0, 0),
-                FontWeight = FontWeights.Bold,
-                FontSize = 10.5,
-                Foreground = (Brush)FindResource("CorelMateTextSecondaryBrush")
-            });
+                Style = GetResource<Style>("CorelMateTextBoxStyle"),
+                MinWidth = 75,
+                ToolTip = v,
+                Text = row.Values.TryGetValue(v, out var val) ? val : v
+            };
+            box.TextChanged += (s, e) => RecalculatePlan();
+            valuesPanel.Children.Add(box);
+            valueBoxes.Add(box);
         }
-        header.Children.Add(new TextBlock
+
+        var qtyBox = new TextBox
         {
-            Text = "QTY",
-            Width = 50,
-            Margin = new Thickness(4, 0, 0, 0),
-            FontWeight = FontWeights.Bold,
-            FontSize = 10.5,
-            Foreground = (Brush)FindResource("CorelMateTextSecondaryBrush")
-        });
-        RowsPanel.Children.Add(header);
+            Style = GetResource<Style>("CorelMateTextBoxStyle"),
+            Text = row.Quantity.ToString(CultureInfo.InvariantCulture),
+            ToolTip = "Quantity"
+        };
+        qtyBox.TextChanged += (s, e) => RecalculatePlan();
+
+        Grid.SetColumn(valuesPanel, 0);
+        Grid.SetColumn(qtyBox, 1);
+        grid.Children.Add(valuesPanel);
+        grid.Children.Add(qtyBox);
+        container.Children.Add(grid);
+
+        rowEditors.Add(new RowEditor(container, valueBoxes, qtyBox));
+        RowsPanel.Children.Add(container);
+        DeleteRowButton.IsEnabled = true;
     }
 
     private void UpdateRowCountDisplay()
     {
-        RowCountText.Text = rowEditors.Count + (rowEditors.Count == 1 ? " row" : " rows");
+        RowCountText.Text = $"{rowEditors.Count} row(s)";
+        GenerateButton.IsEnabled = master != null && rowEditors.Count > 0;
     }
 
-    private void RowInputChanged(object sender, TextChangedEventArgs e)
+    private List<BadgeDataRow> CollectRows()
     {
-        if (master != null) RefreshPreview();
+        var rows = new List<BadgeDataRow>();
+        if (master == null) return rows;
+
+        foreach (var editor in rowEditors)
+        {
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            for (var i = 0; i < master.Variables.Count && i < editor.ValueBoxes.Count; i++)
+            {
+                dict[master.Variables[i]] = editor.ValueBoxes[i].Text;
+            }
+            var qty = int.TryParse(editor.QuantityBox.Text, out var q) && q > 0 ? q : 1;
+            rows.Add(new BadgeDataRow(dict, qty));
+        }
+        return rows;
     }
 
-    private void LayoutTextChanged(object sender, TextChangedEventArgs e)
+    private BadgeLayoutSettings ReadSettings()
     {
-        if (master != null) RefreshPreview();
-    }
+        var w = ParseNumber(BadgeWidthText.Text, "Badge Width");
+        var h = ParseNumber(BadgeHeightText.Text, "Badge Height");
+        var hGap = ParseNumber(HorizontalGapText.Text, "Horizontal Gap");
+        var vGap = ParseNumber(VerticalGapText.Text, "Vertical Gap");
+        var hMargin = ParseNumber(HorizontalMarginText.Text, "Horizontal Margin");
+        var vMargin = ParseNumber(VerticalMarginText.Text, "Vertical Margin");
 
-    private BadgeLayoutSettings CreateLayoutSettings()
-    {
-        if (master == null) throw new InvalidOperationException("Capture the master artwork first.");
         return new BadgeLayoutSettings
         {
-            PageWidthMillimeters = master.PageWidthMillimeters,
-            PageHeightMillimeters = master.PageHeightMillimeters,
-            BadgeWidthMillimeters = ParseNumber(BadgeWidthText.Text, "badge width"),
-            BadgeHeightMillimeters = ParseNumber(BadgeHeightText.Text, "badge height"),
-            HorizontalGapMillimeters = ParseNumber(HorizontalGapText.Text, "horizontal gap"),
-            VerticalGapMillimeters = ParseNumber(VerticalGapText.Text, "vertical gap"),
-            LeftMarginMillimeters = ParseNumber(HorizontalMarginText.Text, "left/right margin"),
-            RightMarginMillimeters = ParseNumber(HorizontalMarginText.Text, "left/right margin"),
-            TopMarginMillimeters = ParseNumber(VerticalMarginText.Text, "top/bottom margin"),
-            BottomMarginMillimeters = ParseNumber(VerticalMarginText.Text, "top/bottom margin")
+            PageWidthMillimeters = 210,
+            PageHeightMillimeters = 297,
+            BadgeWidthMillimeters = w,
+            BadgeHeightMillimeters = h,
+            HorizontalGapMillimeters = hGap,
+            VerticalGapMillimeters = vGap,
+            LeftMarginMillimeters = hMargin,
+            RightMarginMillimeters = hMargin,
+            TopMarginMillimeters = vMargin,
+            BottomMarginMillimeters = vMargin
         };
     }
 
-    private int TotalQuantity()
-    {
-        var total = 0;
-        foreach (var editor in rowEditors)
-        {
-            if (int.TryParse(editor.QuantityBox.Text.Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var quantity) && quantity >= 0) total += quantity;
-        }
-
-        return total;
-    }
-
-    private void RefreshPreview()
+    private void RecalculatePlan()
     {
         if (master == null) return;
+
         try
         {
-            var settings = CreateLayoutSettings();
-            var total = TotalQuantity();
-            var plan = BadgeLayoutEngine.Plan(settings, total);
-            MetricTotalText.Text = total.ToString(CultureInfo.InvariantCulture);
+            var rows = CollectRows();
+            var settings = ReadSettings();
+            var totalCount = 0;
+            foreach (var r in rows) totalCount += r.Quantity;
+            var plan = BadgeLayoutEngine.Plan(settings, totalCount);
+
+            MetricTotalText.Text = totalCount.ToString(CultureInfo.InvariantCulture);
             MetricColumnsText.Text = plan.Columns.ToString(CultureInfo.InvariantCulture);
             MetricPerPageText.Text = plan.PerPage.ToString(CultureInfo.InvariantCulture);
             MetricPagesText.Text = plan.Pages.Count.ToString(CultureInfo.InvariantCulture);
-            PreviewDetailText.Text = "Grid: " + plan.Columns + " col(s) × " + plan.RowsPerPage + " row(s) = " + plan.PerPage + " badges/page across " + plan.Pages.Count + " page(s).";
+            PreviewDetailText.Text = $"Layout: {plan.Columns} col × {plan.RowsPerPage} row = {plan.PerPage}/page across {plan.Pages.Count} page(s).";
+            GenerateButton.IsEnabled = totalCount > 0;
         }
         catch
         {
-            var total = TotalQuantity();
-            MetricTotalText.Text = total > 0 ? total.ToString(CultureInfo.InvariantCulture) : "0";
+            MetricTotalText.Text = "0";
             MetricColumnsText.Text = "-";
             MetricPerPageText.Text = "-";
             MetricPagesText.Text = "-";
-            PreviewDetailText.Text = "Preview unavailable until the layout and rows are valid.";
+            PreviewDetailText.Text = "Check badge dimensions and spacing numbers.";
+            GenerateButton.IsEnabled = false;
         }
-    }
-
-    private void SetMasterControlsEnabled(bool enabled)
-    {
-        AddRowButton.IsEnabled = enabled;
-        DeleteRowButton.IsEnabled = enabled && rowEditors.Count > 0;
-        ImportDataButton.IsEnabled = enabled;
-        PreviewButton.IsEnabled = enabled;
-        GenerateButton.IsEnabled = enabled;
     }
 
     private void SetBusyState(bool busy)
     {
+        isGenerating = busy;
         UseSelectedButton.IsEnabled = !busy;
         AddRowButton.IsEnabled = !busy && master != null;
         DeleteRowButton.IsEnabled = !busy && rowEditors.Count > 0;
@@ -575,7 +793,7 @@ public sealed partial class CorelMatePanel : UserControl
         RowsPanel.Children.Clear();
         var emptyHint = new TextBlock
         {
-            Text = "Capture master artwork to configure data rows or import CSV/XLSX.",
+            Text = "Capture master artwork to configure data rows or import CSV.",
             Style = GetResource<Style>("CorelMateCaptionStyle"),
             HorizontalAlignment = HorizontalAlignment.Center,
             Margin = new Thickness(0, 16, 0, 16)
@@ -587,105 +805,6 @@ public sealed partial class CorelMatePanel : UserControl
         MetricColumnsText.Text = "-";
         MetricPerPageText.Text = "-";
         MetricPagesText.Text = "-";
-        PreviewDetailText.Text = master == null ? "Capture a master to preview the layout plan." : "Preview unavailable until the layout and rows are valid.";
-    }
-
-    #endregion
-
-    #region Convert Text To Curves Feature
-
-    private CurveConversionScope GetSelectedScope()
-    {
-        if (ScopeSelectionRadio?.IsChecked == true) return CurveConversionScope.SelectedObjects;
-        if (ScopeAllPagesRadio?.IsChecked == true) return CurveConversionScope.AllPages;
-        return CurveConversionScope.CurrentPage;
-    }
-
-    private void PreflightCurvesButton_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (curvesConverter == null) throw new InvalidOperationException("CorelDRAW is not connected.");
-            var scope = GetSelectedScope();
-            var preflight = curvesConverter.Preflight(scope);
-
-            CurvesMetricsGrid.Visibility = Visibility.Visible;
-            CurvesFoundCountText.Text = preflight.Summary.FoundTextObjects.ToString();
-            CurvesConvertibleCountText.Text = preflight.Summary.ConvertibleTextObjects.ToString();
-            CurvesGroupsCountText.Text = preflight.Summary.GroupsInspected.ToString();
-            CurvesLockedCountText.Text = preflight.Summary.LockedTextObjects.ToString();
-
-            var scopeDesc = scope == CurveConversionScope.CurrentPage ? "current page"
-                : scope == CurveConversionScope.SelectedObjects ? "selection" : "entire document (" + preflight.Summary.PagesProcessed + " pages)";
-
-            CurvesPreflightDetailText.Visibility = Visibility.Visible;
-            CurvesPreflightDetailText.Text = "Scope: " + scopeDesc + " | Artistic: " + preflight.Summary.ArtisticTextCount + ", Paragraph: " + preflight.Summary.ParagraphTextCount + ", PowerClips: " + preflight.Summary.PowerClipsInspected;
-
-            if (preflight.Summary.ConvertibleTextObjects == 0)
-            {
-                CurvesResultText.Text = "No convertible text found in " + scopeDesc + "." + (preflight.Summary.SkippedTextObjects > 0 ? " (" + preflight.Summary.SkippedTextObjects + " skipped/locked)" : "");
-            }
-            else
-            {
-                CurvesResultText.Text = "Preflight complete: " + preflight.Summary.ConvertibleTextObjects + " text object(s) ready for conversion in " + scopeDesc + ".";
-            }
-        }
-        catch (Exception ex)
-        {
-            CurvesResultText.Text = ex is InvalidOperationException ? ex.Message : "Could not complete preflight: " + ex.Message;
-        }
-    }
-
-    private void ConvertCurvesButton_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            if (curvesConverter == null) throw new InvalidOperationException("CorelDRAW is not connected.");
-            var scope = GetSelectedScope();
-            var preflight = curvesConverter.Preflight(scope);
-
-            CurvesMetricsGrid.Visibility = Visibility.Visible;
-            CurvesFoundCountText.Text = preflight.Summary.FoundTextObjects.ToString();
-            CurvesConvertibleCountText.Text = preflight.Summary.ConvertibleTextObjects.ToString();
-            CurvesGroupsCountText.Text = preflight.Summary.GroupsInspected.ToString();
-            CurvesLockedCountText.Text = preflight.Summary.LockedTextObjects.ToString();
-
-            var scopeDesc = scope == CurveConversionScope.CurrentPage ? "current page"
-                : scope == CurveConversionScope.SelectedObjects ? "selection" : "all pages (" + preflight.Summary.PagesProcessed + " pages)";
-
-            if (preflight.Summary.ConvertibleTextObjects == 0)
-            {
-                CurvesResultText.Text = "No convertible text objects found in " + scopeDesc + ".";
-                if (preflight.Summary.SkippedTextObjects > 0) CurvesResultText.Text += " (" + preflight.Summary.SkippedTextObjects + " text object(s) skipped/locked).";
-                return;
-            }
-
-            var saveCopy = CurvesSaveCopyCheck?.IsChecked == true;
-            var prompt = "Convert " + preflight.Summary.ConvertibleTextObjects + " text object(s) to curves in " + scopeDesc + "?\r\n\r\n"
-                       + (saveCopy ? "✓ A backup copy (_curves.cdr) will be saved first.\r\n\r\n" : "")
-                       + "Note: Text will no longer be editable as text. You can undo this with Ctrl+Z.";
-
-            var confirmation = MessageBox.Show(prompt, "CorelMate: Convert Text to Curves", MessageBoxButton.OKCancel, MessageBoxImage.Question);
-            if (confirmation != MessageBoxResult.OK) return;
-
-            var options = new CurveConversionOptions
-            {
-                Scope = scope,
-                SaveConvertedCopy = saveCopy
-            };
-
-            var result = curvesConverter.Convert(preflight, options);
-            var msg = "✓ " + result.ConvertedTextObjects + " text object(s) successfully converted to curves in " + result.Summary.ExecutionDurationMs + "ms.";
-            if (result.FailedTextObjects > 0) msg += " (" + result.FailedTextObjects + " failed).";
-            if (result.Summary.SkippedTextObjects > 0) msg += " (" + result.Summary.SkippedTextObjects + " skipped/locked).";
-            if (!string.IsNullOrEmpty(result.Summary.SavedCopyPath)) msg += "\r\n💾 Backup saved: " + Path.GetFileName(result.Summary.SavedCopyPath);
-
-            CurvesResultText.Text = msg;
-        }
-        catch (Exception exception)
-        {
-            CurvesResultText.Text = exception is InvalidOperationException ? exception.Message : "CorelDRAW could not complete the text conversion: " + exception.Message;
-        }
     }
 
     #endregion
